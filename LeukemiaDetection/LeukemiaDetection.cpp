@@ -186,7 +186,7 @@ BOOL OpenModelDialog(HWND hWnd) {
 
 BOOL model_compiled = FALSE;
 
-void CompileModel() {
+BOOL CompileModel() {
     // https://learn.microsoft.com/en-us/windows/ai/new-windows-ml/tutorial?source=recommendations&tabs=cpp
     // ->
     winrt::init_apartment();
@@ -222,6 +222,7 @@ void CompileModel() {
     // Clean up
     compileApi->ReleaseModelCompilationOptions(compileOptions);
     // <-
+    return status == nullptr;
 }
 
 //
@@ -259,8 +260,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (OpenImageDialog(hWnd) == TRUE)
                 {
                     OutputDebugStringW(ofn.lpstrFile);
-                    CompileModel();
-                    model_compiled = TRUE;
+                    model_compiled = CompileModel();
                     InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
                 }
                 break;
