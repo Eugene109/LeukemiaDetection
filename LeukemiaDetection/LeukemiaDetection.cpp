@@ -25,6 +25,8 @@ using namespace Windows::Storage;
 #include "framework.h"
 #include "LeukemiaDetection.h"
 
+#include "OnnxModel.h"
+
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -40,6 +42,8 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    BarHandler(HWND, UINT, WPARAM, LPARAM);
 
 Bitmap* g_pBitmap = nullptr;
+OnnxModel* yoloModel = nullptr;
+std::vector<detectionResult> yoloResults;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -69,6 +73,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     //g_pBitmap = new Bitmap(L"..\\kodim03.png");
+
+    //g_pBitmap = new Bitmap(L"..\\3c7a397302c657f9aaa5fa18182f2612.png");
+    //yoloModel = new OnnxModel(L"..\\best.onnx");
+    //yoloModel->CompileModel();
+    //yoloModel->RunModel(g_pBitmap);
+
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_LEUKEMIADETECTION));
 
@@ -184,47 +194,6 @@ BOOL OpenModelDialog(HWND hWnd) {
     return GetOpenFileName(&ofn);
 }
 
-BOOL model_compiled = FALSE;
-
-BOOL CompileModel() {
-    // https://learn.microsoft.com/en-us/windows/ai/new-windows-ml/tutorial?source=recommendations&tabs=cpp
-    // ->
-    winrt::init_apartment();
-    // Initialize ONNX Runtime
-    Ort::Env env(ORT_LOGGING_LEVEL_ERROR, "CppConsoleDesktop");
-
-    // Use Windows ML to download and register Execution Providers
-    /*auto catalog = Windows::AI::MachineLearning::ExecutionProviderCatalog::GetDefault();
-    catalog.EnsureAndRegisterCertifiedAsync().get();*/
-
-    // Set the auto EP selection policy
-    Ort::SessionOptions sessionOptions;
-    sessionOptions.SetEpSelectionPolicy(OrtExecutionProviderDevicePolicy_MIN_OVERALL_POWER);
-    // <-\
-
-    std::wstring modelPath = ofn.lpstrFile;
-    std::wstring compiledModelPath = modelPath + L".compiled";
-
-    // https://learn.microsoft.com/en-us/windows/ai/new-windows-ml/tutorial?source=recommendations&tabs=cpp
-    // ->
-    const OrtApi* ortApi = OrtGetApiBase()->GetApi(ORT_API_VERSION);
-    const OrtCompileApi* compileApi = ortApi->GetCompileApi();
-
-    // Prepare compilation options
-    OrtModelCompilationOptions* compileOptions = nullptr;
-    OrtStatus* status = compileApi->CreateModelCompilationOptionsFromSessionOptions(env, sessionOptions, &compileOptions);
-    status = compileApi->ModelCompilationOptions_SetInputModelPath(compileOptions, modelPath.c_str());
-    status = compileApi->ModelCompilationOptions_SetOutputModelPath(compileOptions, compiledModelPath.c_str());
-
-    // Compile the model
-    status = compileApi->CompileModel(env, compileOptions);
-
-    // Clean up
-    compileApi->ReleaseModelCompilationOptions(compileOptions);
-    // <-
-    return status == nullptr;
-}
-
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -256,11 +225,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
                 }
                 break;
-            case ID_TOOLS_COMPILEMODEL:
+            case ID_TOOLS_LOADMODEL:
                 if (OpenImageDialog(hWnd) == TRUE)
                 {
                     OutputDebugStringW(ofn.lpstrFile);
-                    model_compiled = CompileModel();
+                    yoloModel = new OnnxModel(std::wstring(ofn.lpstrFile));
+                    InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
+                }
+                break;
+            case ID_TOOLS_COMPILEMODEL:
+                if (yoloModel != nullptr)
+                {
+					yoloModel->CompileModel();
+                    InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
+                }
+                break;
+            case ID_TOOLS_RUNMODEL:
+                if (yoloModel != nullptr)
+                {
+                    yoloResults = yoloModel->RunModel(g_pBitmap);
                     InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
                 }
                 break;
@@ -298,14 +281,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
             }
 
-            if (model_compiled) {
-                LPCSTR msg = "model compiled";
-                RECT rect = { 150, 0, 350, 100 };
+            if (yoloModel == nullptr) {
+                LPCSTR msg = "Load an ONNX model (Tools-> Load Model)";
+                RECT rect = { 150, 0, 500, 100 };
+                DrawTextA(hdc, msg, -1, &rect, DT_TOP);
+            } else if(yoloModel->isCompiled()){
+                LPCSTR msg = "ONNX model compiled sucessfully";
+                RECT rect = { 150, 0, 500, 100 };
                 DrawTextA(hdc, msg, -1, &rect, DT_TOP);
             }else {
-                LPCSTR msg = "model not compiled";
-                RECT rect = { 150, 0, 350, 100 };
+                LPCSTR msg = "ONNX model not compiled";
+                RECT rect = { 150, 0, 500, 100 };
                 DrawTextA(hdc, msg, -1, &rect, DT_TOP);
+            }
+            for(auto det : yoloResults){
+				RectF box = RectF(det.box.X +50, det.box.Y+50, det.box.Width, det.box.Height);
+                Pen* pen = new Pen(Color(255, 0, 0));
+                graphics.DrawRectangle(pen, box);
+				RECT rect = { det.box.X + 50, det.box.Y + 50, det.box.X + 50 + det.box.Width, det.box.Y + 50 + det.box.Height };
+				std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
+			    DrawTextA(hdc, title.c_str(), -1, &rect, DT_TOP);
             }
 
             EndPaint(hWnd, &ps);
