@@ -26,6 +26,7 @@ using namespace Windows::Storage;
 #include "LeukemiaDetection.h"
 
 #include "OnnxModel.h"
+#include "YoloModel.h"
 
 #define MAX_LOADSTRING 100
 
@@ -42,8 +43,8 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    BarHandler(HWND, UINT, WPARAM, LPARAM);
 
 Bitmap* g_pBitmap = nullptr;
-OnnxModel* yoloModel = nullptr;
-std::vector<detectionResult> yoloResults;
+YoloModel* yoloModel = nullptr;
+std::vector<yoloDetectionResult> yoloResults;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -78,7 +79,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     //yoloModel = new OnnxModel(L"..\\best.onnx");
     //yoloModel->CompileModel();
     //yoloModel->RunModel(g_pBitmap);
-
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_LEUKEMIADETECTION));
 
@@ -229,7 +229,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (OpenImageDialog(hWnd) == TRUE)
                 {
                     OutputDebugStringW(ofn.lpstrFile);
-                    yoloModel = new OnnxModel(std::wstring(ofn.lpstrFile));
+                    yoloModel = new YoloModel(std::wstring(ofn.lpstrFile));
                     InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
                 }
                 break;

@@ -133,6 +133,7 @@
     <ClInclude Include="OnnxModel.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="YoloModel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LeukemiaDetection.cpp" />

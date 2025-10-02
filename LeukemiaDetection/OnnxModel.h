@@ -10,6 +10,7 @@
 #include <gdiplus.h>
 
 #include <vector>
+#include <filesystem>
 
 using namespace Gdiplus;
 
@@ -17,13 +18,6 @@ using namespace winrt;
 using namespace Windows::AI::MachineLearning;
 using namespace Windows::Foundation;
 using namespace Windows::Storage;
-
-
-struct detectionResult {
-    RectF box;
-    float confidence;
-    int classId;
-};
 
 class OnnxModel {
     BOOL model_compiled;
@@ -45,7 +39,8 @@ public:
         sessionOptions = new Ort::SessionOptions();
         sessionOptions->SetEpSelectionPolicy(OrtExecutionProviderDevicePolicy_MIN_OVERALL_POWER);
         // <-\ 
-        model_compiled = FALSE;
+        compiledModelPath = modelPath + L".compiled";
+        model_compiled = std::filesystem::exists(compiledModelPath);
 	}
     ~OnnxModel() {
         delete env;
@@ -54,7 +49,6 @@ public:
 	BOOL isCompiled() { return model_compiled; }
 
     BOOL CompileModel() {
-        compiledModelPath = modelPath + L".compiled";
         // https://learn.microsoft.com/en-us/windows/ai/new-windows-ml/tutorial?source=recommendations&tabs=cpp
         // ->
         const OrtApi* ortApi = OrtGetApiBase()->GetApi(ORT_API_VERSION);
@@ -75,46 +69,9 @@ public:
         return model_compiled = status == nullptr;
     }
 
-    std::vector<detectionResult> parseYoloOutput(std::vector<float> results, int origW, int origH) {
-        std::vector<detectionResult> output;
-        for (int p = 0; p < 8400; p++) {
-            float bestScore = 0.f;
-            int bestClass = -1;
-            for (int c = 0; c < 3; c++) {
-                float score = results[p + (c + 4) * 8400];
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestClass = c;
-                }
-            }
-            if (bestScore > 0.2){
-				int x1 = (results[p + 0 * 8400] - results[p + 2 * 8400] / 2) * origW;
-                int y1 = (results[p + 1 * 8400] - results[p + 3 * 8400] / 2) * origH;
-                int w = (results[p + 2 * 8400]) * origW;
-                int h = (results[p + 3 * 8400]) * origH;
-				detectionResult det;
-				det.box = RectF(x1, y1, w, h);
-				det.confidence = bestScore;
-				det.classId = bestClass;
-				output.push_back(det);
 
-				//debug print
-                wchar_t buffer[64];
-                swprintf(buffer, 64, L"%d: [", p);
-                OutputDebugStringW(buffer);
-                for (int i = 0; i < 7; i++) {
-                    float value = results[p + i * 8400];
-                    //wchar_t buffer[64];
-                    swprintf(buffer, 64, L"%f, ", value);
-                    OutputDebugStringW(buffer);
-                }
-                OutputDebugStringW(L"]\n");
-            }
-        }
-        return output;
-    }
-
-    std::vector<detectionResult> RunModel(Bitmap* inputFrame) {
+    // maybe we should make the input and output just Ort::Value tensor datatypes?
+    std::vector<float> RunInference(Bitmap* inputFrame) {
         Ort::Session session(*env, compiledModelPath.c_str(), *sessionOptions);
         OutputDebugStringW(L"Ort Session Started...\n");
 
@@ -167,17 +124,12 @@ public:
             results = ResnetModelHelper::ConvertFloat16ToFloat32(outputFloat16);
         }*/
 
-        // Load labels and print result
-        OutputDebugStringW(L"Output from inference:\n");
-        auto detectionResults = parseYoloOutput(results, inputFrame->GetWidth(), inputFrame->GetHeight());
-        //auto labels = LoadLabels();
-        //TODO: load labels and parse data
 
         // cleanup
         inputName.release();
         outputName.release();
 //        delete[] inputTensor.GetTensorRawData();
-        return detectionResults;
+        return results;
     }
 
     Ort::Value toOrtValue(Bitmap* src) {  // Ort::Value is a tensor
@@ -203,9 +155,7 @@ public:
     Ort::Value preprocessImage(Bitmap* src) {
         Bitmap* scaledBitmap = new Bitmap(inputTensorW, inputTensorH);
         Graphics scalarGfx(scaledBitmap);
-        Pen* pen = new Pen(Color(0, 0, 0));
-        scalarGfx.DrawRectangle(pen, 0, 0, inputTensorW, inputTensorH);
-        delete pen;
+        scalarGfx.Clear(Color(0, 0, 0));
         scalarGfx.SetInterpolationMode(InterpolationModeHighQualityBicubic); // Bilinear or Nearest
         if ((float)src->GetWidth() / src->GetHeight() > (float)inputTensorW / inputTensorH) {
             int scaledHeight = src->GetHeight() * (float)inputTensorW / (float)src->GetWidth();
