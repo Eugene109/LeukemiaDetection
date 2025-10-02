@@ -39,10 +39,10 @@ public:
                 }
             }
             if (bestScore > 0.2) {
-                int x1 = (results[p + 0 * 8400] - results[p + 2 * 8400] / 2) / inputTensorW * origW;
-                int y1 = (results[p + 1 * 8400] - results[p + 3 * 8400] / 2) / inputTensorH * origH;
-                int w = (results[p + 2 * 8400]) / inputTensorW * origW;
-                int h = (results[p + 3 * 8400]) / inputTensorH * origH;
+                float x1 = (results[p + 0 * 8400] - results[p + 2 * 8400] / 2) ;
+                float y1 = (results[p + 1 * 8400] - results[p + 3 * 8400] / 2) ;
+                float w = (results[p + 2 * 8400]);
+                float h = (results[p + 3 * 8400]);
                 yoloDetectionResult det;
                 det.box = RectF(x1, y1, w, h);
                 det.confidence = bestScore;

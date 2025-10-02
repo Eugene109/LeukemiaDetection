@@ -294,13 +294,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 RECT rect = { 150, 0, 500, 100 };
                 DrawTextA(hdc, msg, -1, &rect, DT_TOP);
             }
-            for(auto det : yoloResults){
-				RectF box = RectF(det.box.X +50, det.box.Y+50, det.box.Width, det.box.Height);
-                Pen* pen = new Pen(Color(255, 0, 0));
-                graphics.DrawRectangle(pen, box);
-				RECT rect = { det.box.X + 50, det.box.Y + 50, det.box.X + 50 + det.box.Width, det.box.Y + 50 + det.box.Height };
-				std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
-			    DrawTextA(hdc, title.c_str(), -1, &rect, DT_TOP);
+            if (yoloResults.size()) {
+				graphics.Clear(Color(255, 255, 255));
+				Bitmap* preprocessedImage = yoloModel->preprocessImage(g_pBitmap);
+                graphics.DrawImage(preprocessedImage, 0, 0);
+				delete preprocessedImage;
+                for (auto& det : yoloResults) {
+                    Pen* pen = new Pen(Color(255, 0, 0));
+                    graphics.DrawRectangle(pen, det.box);
+                    RECT rect = { det.box.X , det.box.Y, det.box.X + det.box.Width, det.box.Y + det.box.Height };
+                    std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
+                    DrawTextA(hdc, title.c_str(), -1, &rect, DT_TOP);
+                }
             }
 
             EndPaint(hWnd, &ps);

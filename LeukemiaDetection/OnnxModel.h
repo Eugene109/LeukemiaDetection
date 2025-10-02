@@ -76,7 +76,9 @@ public:
         OutputDebugStringW(L"Ort Session Started...\n");
 
         // Load and Preprocess image as input tensor
-		Ort::Value inputTensor = preprocessImage(inputFrame);
+		Bitmap* preprocessedImage = preprocessImage(inputFrame);
+		Ort::Value inputTensor = toOrtValue(preprocessedImage);
+		delete preprocessedImage;
 
         OutputDebugStringW(L"Running inference...\n");
            
@@ -152,7 +154,8 @@ public:
 
     const int inputTensorW = 640;
     const int inputTensorH = 640;
-    Ort::Value preprocessImage(Bitmap* src) {
+	// returns a new Bitmap that should be deleted by the caller
+    Bitmap* preprocessImage(Bitmap* src) {
         Bitmap* scaledBitmap = new Bitmap(inputTensorW, inputTensorH);
         Graphics scalarGfx(scaledBitmap);
         scalarGfx.Clear(Color(0, 0, 0));
@@ -165,10 +168,6 @@ public:
             int scaledWidth = src->GetWidth() * (float)inputTensorH / (float)src->GetHeight();
             scalarGfx.DrawImage(src, (inputTensorH - scaledWidth)/2, 0, scaledWidth, inputTensorH);
         }
-        //TODO:
-        // convert scaledBitmap to TensorFloat
-        Ort::Value tensor = toOrtValue(scaledBitmap);
-		delete scaledBitmap;
-        return tensor;
+        return scaledBitmap;
     }
 };
