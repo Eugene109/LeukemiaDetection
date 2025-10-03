@@ -33,6 +33,9 @@
     <ClInclude Include="YoloModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Sahi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LeukemiaDetection.cpp">
@@ -56,5 +59,6 @@
     <None Include="packages.config" />
     <None Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-x64\native\onnxruntime.dll" />
     <None Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-x64\native\onnxruntime_providers_shared.dll" />
+    <None Include="..\external\openslide-bin-4.0.0.8-windows-x64\bin\libopenslide-1.dll" />
   </ItemGroup>
 </Project>

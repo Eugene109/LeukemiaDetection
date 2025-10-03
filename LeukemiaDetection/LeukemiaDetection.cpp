@@ -7,6 +7,12 @@
 
 #include <onnxruntime_cxx_api.h>
 
+#include "openslide-features.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "openslide.h"
+
 #include <windows.h>
 #include <gdiplus.h>
 
@@ -46,6 +52,10 @@ Bitmap* g_pBitmap = nullptr;
 YoloModel* yoloModel = nullptr;
 std::vector<yoloDetectionResult> yoloResults;
 
+
+openslide_t* slide_test = nullptr;
+uint32_t* imgBuff = nullptr;
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPWSTR    lpCmdLine,
@@ -80,6 +90,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     //yoloModel->CompileModel();
     //yoloModel->RunModel(g_pBitmap);
 
+
+    imgBuff = new uint32_t[640 * 640 * 4];
+    slide_test = openslide_open("C:/Users/920257/Downloads/24496.svs");
+    long long height = 0;
+    long long width = 0;
+    openslide_get_level0_dimensions(slide_test, &width, &height);
+    wchar_t buffer[256];
+    wsprintf(buffer, L"openslide image dimensions: width=%d, height=%d\n", (int)width, (int)height);
+    OutputDebugStringW(buffer);
+
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_LEUKEMIADETECTION));
 
     MSG msg;
@@ -94,8 +114,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
-    delete g_pBitmap;
+    if (g_pBitmap)
+        delete g_pBitmap;
     g_pBitmap = nullptr;
+    if (yoloModel != nullptr)
+        delete yoloModel;
+    delete[] imgBuff;
+
+    openslide_close(slide_test);
+
     GdiplusShutdown(gdiplusToken);
 
     return (int) msg.wParam;
@@ -169,7 +196,7 @@ BOOL OpenImageDialog(HWND hWnd) {
     ofn.hwndOwner = hWnd;
     ofn.lpstrFile = szFile;
     ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = _T("All\0*.*\0Text\0*.TXT\0");
+    ofn.lpstrFilter = _T("Image Files\0*.png;*.tiff;*.jpeg;*.jpg;*.bmp;*.gif\0All\0*.*\0");
     ofn.nFilterIndex = 1;
     ofn.lpstrFileTitle = NULL;
     ofn.nMaxFileTitle = 0;
@@ -184,7 +211,7 @@ BOOL OpenModelDialog(HWND hWnd) {
     ofn.hwndOwner = hWnd;
     ofn.lpstrFile = szFile;
     ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = _T("All\0*.*\0Text\0*.TXT\0ONNX Model\0*.onnx");
+    ofn.lpstrFilter = _T("ONNX Model\0*.onnx\0All\0*.*\0Text\0*.TXT\0Binary\0*.BIN\0");
     ofn.nFilterIndex = 1;
     ofn.lpstrFileTitle = NULL;
     ofn.nMaxFileTitle = 0;
@@ -204,6 +231,7 @@ BOOL OpenModelDialog(HWND hWnd) {
 //  WM_DESTROY  - post a quit message and return
 //
 //
+int currentSeg = 10;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -221,12 +249,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (OpenImageDialog(hWnd) == TRUE)
                 {
                     OutputDebugStringW(ofn.lpstrFile);
+                    if (g_pBitmap)
+                        delete g_pBitmap;
                     g_pBitmap = new Bitmap(ofn.lpstrFile);
                     InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
                 }
                 break;
+            case ID_FILE_NEXTIMAGESEGMENT:
+
+#define LEVEL 0
+                openslide_read_region(slide_test, imgBuff, 10000, (currentSeg++) * 320, LEVEL, 640, 640);
+                OutputDebugStringA(openslide_get_error(slide_test));
+
+                if (g_pBitmap)
+                    delete g_pBitmap;
+                g_pBitmap = new Bitmap((int)640, (int)640, (int)640 * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
+
+                InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
+                break;
             case ID_TOOLS_LOADMODEL:
-                if (OpenImageDialog(hWnd) == TRUE)
+                if (OpenModelDialog(hWnd) == TRUE)
                 {
                     OutputDebugStringW(ofn.lpstrFile);
                     yoloModel = new YoloModel(std::wstring(ofn.lpstrFile));
@@ -267,7 +309,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             //Bitmap test(L"C:\\Users\\Eugene\\source\\repos\\LeukemiaDetection\\kodim03.png");
 
             Graphics graphics(hdc);
-            if (!g_pBitmap) {
+            if (g_pBitmap == nullptr) {
                 LPCSTR error_msg = "Open an image file (File->Open Image)";
                 RECT error_rect = { 50, 50, 350, 100 };
                 DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
