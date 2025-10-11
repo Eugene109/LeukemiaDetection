@@ -31,8 +31,9 @@ using namespace Windows::Storage;
 #include "framework.h"
 #include "LeukemiaDetection.h"
 
-#include "OnnxModel.h"
-#include "YoloModel.h"
+#include "Model.h"
+#include "View.h"
+#include "Controller.h"
 
 #define MAX_LOADSTRING 100
 
@@ -45,16 +46,10 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    BarHandler(HWND, UINT, WPARAM, LPARAM);
 
-Bitmap* g_pBitmap = nullptr;
-YoloModel* yoloModel = nullptr;
-std::vector<yoloDetectionResult> yoloResults;
-
-
-openslide_t* slide_test = nullptr;
-uint32_t* imgBuff = nullptr;
+Model* model;
+View* view;
+Controller* controller;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -72,6 +67,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
+    model = new Model();
+    view = new View(model);
+    controller = new Controller(hInstance, model);
+
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_LEUKEMIADETECTION, szWindowClass, MAX_LOADSTRING);
@@ -82,23 +81,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     {
         return FALSE;
     }
-
-    //g_pBitmap = new Bitmap(L"..\\kodim03.png");
-
-    //g_pBitmap = new Bitmap(L"..\\3c7a397302c657f9aaa5fa18182f2612.png");
-    //yoloModel = new OnnxModel(L"..\\best.onnx");
-    //yoloModel->CompileModel();
-    //yoloModel->RunModel(g_pBitmap);
-
-
-    imgBuff = new uint32_t[640 * 640 * 4];
-    slide_test = openslide_open("C:/Users/920257/Downloads/24496.svs");
-    long long height = 0;
-    long long width = 0;
-    openslide_get_level0_dimensions(slide_test, &width, &height);
-    wchar_t buffer[256];
-    wsprintf(buffer, L"openslide image dimensions: width=%d, height=%d\n", (int)width, (int)height);
-    OutputDebugStringW(buffer);
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_LEUKEMIADETECTION));
 
@@ -114,16 +96,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
-    if (g_pBitmap)
-        delete g_pBitmap;
-    g_pBitmap = nullptr;
-    if (yoloModel != nullptr)
-        delete yoloModel;
-    delete[] imgBuff;
-
-    openslide_close(slide_test);
-
     GdiplusShutdown(gdiplusToken);
+
+    // destructors of each of these classes handles memory frees
+    delete controller;
+    delete view;
+    delete model;
 
     return (int) msg.wParam;
 }
@@ -178,179 +156,62 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
 
+   CreateWindowEx(0, L"STATIC", L"Name:",
+       WS_CHILD | WS_VISIBLE, 810, 10, 60, 20,
+       hWnd, (HMENU)1, hInst, nullptr);
+
+   CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"best.onnx",
+       WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
+       880, 10, 150, 20,
+       hWnd, (HMENU)2, hInst, nullptr);
+
+   CreateWindowEx(0, L"BUTTON", L"Submit",
+       WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+       1040, 10, 80, 25,
+       hWnd, (HMENU)3, hInst, nullptr);
+
+
+   CreateWindowEx(0, L"STATIC", L"Segment X:",
+       WS_CHILD | WS_VISIBLE, 810, 70, 80, 20,
+       hWnd, (HMENU)4, hInst, nullptr);
+
+   CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"0",
+       WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
+       900, 70, 130, 20,
+       hWnd, (HMENU)5, hInst, nullptr);
+
+   CreateWindowEx(0, L"STATIC", L"Segment Y:",
+       WS_CHILD | WS_VISIBLE, 810, 100, 80, 20,
+       hWnd, (HMENU)6, hInst, nullptr);
+
+   CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"0",
+       WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
+       900, 100, 130, 20,
+       hWnd, (HMENU)7, hInst, nullptr);
+
+   CreateWindowEx(0, L"BUTTON", L"Move",
+       WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+       950, 130, 80, 25,
+       hWnd, (HMENU)8, hInst, nullptr);
+
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
    return TRUE;
 }
 
-OPENFILENAME ofn;       // common dialog box structure
-TCHAR szFile[260] = { 0 };       // if using TCHAR macros
-BOOL OpenImageDialog(HWND hWnd) {
-
-// https://stackoverflow.com/questions/4167286/win32-function-to-openfiledialog, artem moroz
-
-    // Initialize OPENFILENAME
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hWnd;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = _T("Image Files\0*.png;*.tiff;*.jpeg;*.jpg;*.bmp;*.gif\0All\0*.*\0");
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = NULL;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    return GetOpenFileName(&ofn);
-}
-BOOL OpenModelDialog(HWND hWnd) {
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hWnd;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = _T("ONNX Model\0*.onnx\0All\0*.*\0Text\0*.TXT\0Binary\0*.BIN\0");
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = NULL;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    return GetOpenFileName(&ofn);
-}
-
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE: Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
-int currentSeg = 10;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
     case WM_COMMAND:
         {
-            int wmId = LOWORD(wParam);
-            // Parse the menu selections:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case ID_FILE_OPENIMAGE:
-                if (OpenImageDialog(hWnd) == TRUE)
-                {
-                    OutputDebugStringW(ofn.lpstrFile);
-                    if (g_pBitmap)
-                        delete g_pBitmap;
-                    g_pBitmap = new Bitmap(ofn.lpstrFile);
-                    InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
-                }
-                break;
-            case ID_FILE_NEXTIMAGESEGMENT:
-
-#define LEVEL 0
-                openslide_read_region(slide_test, imgBuff, 10000, (currentSeg++) * 320, LEVEL, 640, 640);
-                OutputDebugStringA(openslide_get_error(slide_test));
-
-                if (g_pBitmap)
-                    delete g_pBitmap;
-                g_pBitmap = new Bitmap((int)640, (int)640, (int)640 * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
-
-                InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
-                break;
-            case ID_TOOLS_LOADMODEL:
-                if (OpenModelDialog(hWnd) == TRUE)
-                {
-                    OutputDebugStringW(ofn.lpstrFile);
-                    yoloModel = new YoloModel(std::wstring(ofn.lpstrFile));
-                    InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
-                }
-                break;
-            case ID_TOOLS_COMPILEMODEL:
-                if (yoloModel != nullptr)
-                {
-					yoloModel->CompileModel();
-                    InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
-                }
-                break;
-            case ID_TOOLS_RUNMODEL:
-                if (yoloModel != nullptr)
-                {
-                    yoloResults = yoloModel->RunModel(g_pBitmap);
-                    InvalidateRect(hWnd, 0, TRUE); // trigger redraw of window
-                }
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
+            controller->ProcessCommand(hWnd, message, wParam, lParam);
         }
         break;
     case WM_PAINT:
         {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-            LPCSTR message_ptr = "Hello World!";
-            RECT rect = { 0,0,300,100 };
-            DrawTextA(hdc, message_ptr, 13, &rect, DT_TOP);
-
-            //Bitmap test(L"C:\\Users\\Eugene\\source\\repos\\LeukemiaDetection\\kodim03.png");
-
-            Graphics graphics(hdc);
-            if (g_pBitmap == nullptr) {
-                LPCSTR error_msg = "Open an image file (File->Open Image)";
-                RECT error_rect = { 50, 50, 350, 100 };
-                DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
-            }
-            else if (g_pBitmap && g_pBitmap->GetLastStatus() == Ok) {
-                graphics.DrawImage(g_pBitmap, 50, 50);
-            }
-            else {
-                LPCSTR error_msg = "Image not found!";
-                RECT error_rect = { 50, 50, 350, 100 };
-                DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
-            }
-
-            if (yoloModel == nullptr) {
-                LPCSTR msg = "Load an ONNX model (Tools-> Load Model)";
-                RECT rect = { 150, 0, 500, 100 };
-                DrawTextA(hdc, msg, -1, &rect, DT_TOP);
-            } else if(yoloModel->isCompiled()){
-                LPCSTR msg = "ONNX model compiled sucessfully";
-                RECT rect = { 150, 0, 500, 100 };
-                DrawTextA(hdc, msg, -1, &rect, DT_TOP);
-            }else {
-                LPCSTR msg = "ONNX model not compiled";
-                RECT rect = { 150, 0, 500, 100 };
-                DrawTextA(hdc, msg, -1, &rect, DT_TOP);
-            }
-            if (yoloResults.size()) {
-				graphics.Clear(Color(255, 255, 255));
-				Bitmap* preprocessedImage = yoloModel->preprocessImage(g_pBitmap);
-                graphics.DrawImage(preprocessedImage, 0, 0);
-				delete preprocessedImage;
-                for (auto& det : yoloResults) {
-                    Pen* pen = new Pen(Color(255, 0, 0));
-                    graphics.DrawRectangle(pen, det.box);
-                    RECT rect = { det.box.X , det.box.Y, det.box.X + det.box.Width, det.box.Y + det.box.Height };
-                    std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
-                    DrawTextA(hdc, title.c_str(), -1, &rect, DT_TOP);
-                }
-            }
-
-            EndPaint(hWnd, &ps);
+            view->Paint(hWnd);
         }
         break;
     case WM_DESTROY:
@@ -360,45 +221,4 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
-}
-
-// Message handler for about box.
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
-
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
-}
-
-
-// Message handler for about box.
-INT_PTR CALLBACK BarHandler(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
-
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
 }
