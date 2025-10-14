@@ -9,9 +9,7 @@ public:
 
 
 
-    virtual std::vector<float> RunModel(Bitmap* inputFrame) {
-
-
+    std::vector<float> RunModel(Bitmap* inputFrame) {
         // Load and Preprocess image as input tensor
         Bitmap* preprocessedImage = preprocessImage(inputFrame);
         Ort::Value inputTensor = toOrtValue(preprocessedImage);

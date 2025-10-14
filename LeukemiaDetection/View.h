@@ -82,10 +82,12 @@ public:
             Bitmap* preprocessedImage = model->getCellDetector()->preprocessImage(model->getSlideImg()->segmentBitmap);
             //
 
-            graphics.DrawImage(preprocessedImage, 0, 0);
+            graphics.DrawImage(preprocessedImage, 50, 50);
             delete preprocessedImage;
             for (auto& det : model->getCellResults()) {
                 Pen* pen = new Pen(Color(255, 0, 0));
+                det.box.X += 50;
+                det.box.Y += 50;
                 graphics.DrawRectangle(pen, det.box);
                 RECT rect = { det.box.X , det.box.Y, det.box.X + det.box.Width, det.box.Y + det.box.Height };
                 std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";

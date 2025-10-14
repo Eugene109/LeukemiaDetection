@@ -12,6 +12,9 @@
 #define IDI_LEUKEMIADETECTION           107
 #define IDI_SMALL                       108
 #define IDC_LEUKEMIADETECTION           109
+#define IDC_SEGMENT_X                   110
+#define IDC_SEGMENT_Y                   111
+#define IDC_MOVE_SEGMENT                112
 #define IDR_MAINFRAME                   128
 #define ID_HELLOTHERE_HI                32771
 #define ID_TOOLS                        32772

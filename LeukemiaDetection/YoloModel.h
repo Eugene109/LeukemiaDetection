@@ -43,7 +43,7 @@ public:
     
     //int num_detections = 756;
     int num_detections = 8400;
-    std::vector<yoloDetectionResult> parseYoloOutput(std::vector<float> results, int origW, int origH) {
+    std::vector<yoloDetectionResult> parseYoloOutput(std::vector<float> &results, int origW, int origH) {
         int num_classes = results.size() / num_detections - 4;
         std::vector<yoloDetectionResult> output;
         for (int p = 0; p < num_detections; p++) {

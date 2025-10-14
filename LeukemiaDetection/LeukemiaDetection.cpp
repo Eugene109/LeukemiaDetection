@@ -59,6 +59,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    6 - 7;
+
     ULONG_PTR gdiplusToken;
     GdiplusStartupInput gdiplusStartupInput;
     Status gdiplusStatus = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
@@ -175,23 +177,27 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
        WS_CHILD | WS_VISIBLE, 810, 70, 80, 20,
        hWnd, (HMENU)4, hInst, nullptr);
 
-   CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"0",
+   controller->textInput_x =CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"100",
        WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
        900, 70, 130, 20,
-       hWnd, (HMENU)5, hInst, nullptr);
+       hWnd, (HMENU)IDC_SEGMENT_X, hInst, nullptr);
 
    CreateWindowEx(0, L"STATIC", L"Segment Y:",
        WS_CHILD | WS_VISIBLE, 810, 100, 80, 20,
        hWnd, (HMENU)6, hInst, nullptr);
 
-   CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"0",
+   controller->textInput_y = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"27",
        WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
        900, 100, 130, 20,
-       hWnd, (HMENU)7, hInst, nullptr);
+       hWnd, (HMENU)IDC_SEGMENT_Y, hInst, nullptr);
 
    CreateWindowEx(0, L"BUTTON", L"Move",
        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
        950, 130, 80, 25,
+       hWnd, (HMENU)IDC_MOVE_SEGMENT, hInst, nullptr);
+
+   CreateWindowEx(0, L"TRACKBAR", L"",
+       WS_CHILD | WS_VISIBLE, 810, 160, 80, 20,
        hWnd, (HMENU)8, hInst, nullptr);
 
    ShowWindow(hWnd, nCmdShow);
@@ -205,14 +211,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_COMMAND:
-        {
-            controller->ProcessCommand(hWnd, message, wParam, lParam);
-        }
+        return controller->ProcessCommand(hWnd, message, wParam, lParam);
+        break;
+
+    case WM_LBUTTONDOWN:
+        return controller->ProcessLButtonDown(hWnd, message, wParam, lParam);
+    case WM_LBUTTONUP:
+        return controller->ProcessLButtonUp(hWnd, message, wParam, lParam);
+    case WM_RBUTTONDOWN:
+        return controller->ProcessRButtonDown(hWnd, message, wParam, lParam);
+    case WM_RBUTTONUP:
+        return controller->ProcessRButtonUp(hWnd, message, wParam, lParam);
+    case WM_MOUSEMOVE:
+        return controller->ProcessMouseMove(hWnd, message, wParam, lParam);
         break;
     case WM_PAINT:
-        {
-            view->Paint(hWnd);
-        }
+        view->Paint(hWnd);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);

@@ -7,6 +7,16 @@ class Sahi {
 	// 3. parse yolo output and recombine slices
 	// 4. output global coordinate detections
 public:
-	Sahi() {}
-	~Sahi() {}
+	YoloModel* cellDetector;
+	Sahi(std::wstring modelPath) {
+		cellDetector = new YoloModel(modelPath);
+		cellDetector->CompileModel();
+		cellDetector->inputTensorW;
+		cellDetector->inputTensorH;
+	}
+	~Sahi() {
+		delete cellDetector;
+	}
+
+	void Run(openslide_t* slide) {}
 };
