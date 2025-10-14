@@ -30,7 +30,8 @@ public:
 	int seg_h;
 	long long total_w; long long total_h;
 	SlideImageModel(LPWSTR filename, int segmentWidth = 640, int segmentHeight = 640, int startX = 0, int startY = 0) 
-		: seg_w(segmentWidth), seg_h(segmentHeight), currentSeg_x(startX), currentSeg_y(startY), xPos(0), yPos(0){
+		: seg_w(segmentWidth), seg_h(segmentHeight), currentSeg_x(startX), currentSeg_y(startY),
+		xPos(startX*segmentWidth/2 - 640), yPos(startY*segmentHeight/2 - 640), xOff(640), yOff(640) {
 		int requiredSize = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
 		char* c_str = new char[requiredSize];
 		memset(c_str, 0, requiredSize);
@@ -43,9 +44,9 @@ public:
 		wsprintf(buffer, L"openslide image dimensions: width=%d, height=%d\n", (int)total_w, (int)total_h);
 		OutputDebugStringW(buffer);
 
-		imgBuff = new uint32_t[640 * 640 * 4];
-		openslide_read_region(slide, imgBuff, (currentSeg_x)*seg_w / 2, (currentSeg_y) * seg_h / 2, LEVEL, seg_w, seg_h);
-		segmentBitmap = new Bitmap((int)seg_w, (int)seg_h, (int)seg_w * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
+		imgBuff = new uint32_t[640 * 640 * 9];
+		openslide_read_region(slide, imgBuff, xPos, yPos, LEVEL, seg_w*3, seg_h*3);
+		segmentBitmap = new Bitmap((int)seg_w*3, (int)seg_h*3, (int)seg_w * 3 * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
 	}
 	~SlideImageModel() {
 		openslide_close(slide);
@@ -55,19 +56,32 @@ public:
 
 	int xPos;
 	int yPos;
+	int xOff;
+	int yOff;
 	char debug[100] = { 0 };
 	void move(int dx, int dy) {
 		//sprintf_s(debug, "move x:%d, y:%d\n", x, y);
 		//OutputDebugStringA(debug);
-		xPos += dx;
-		yPos += dy;
+		xOff += dx;
+		yOff += dy;
 
 		//glm::vec2 start = glm::vec2(currentSeg_x*seg_w / 2, currentSeg_y*seg_h / 2);
 		//glm::vec2 pos = (/*glm::inverse*/(transform) * glm::vec3(start, 1));
-		delete segmentBitmap; segmentBitmap = nullptr;
-		openslide_read_region(slide, imgBuff, currentSeg_x * seg_w / 2+ yPos, currentSeg_x * seg_h / 2 + yPos, LEVEL, seg_w, seg_h);
+		//delete segmentBitmap; segmentBitmap = nullptr;
+		//openslide_read_region(slide, imgBuff, xPos, yPos, LEVEL, seg_w, seg_h);
 
-		segmentBitmap = new Bitmap((int)seg_w, (int)seg_h, (int)seg_w * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
+		//segmentBitmap = new Bitmap((int)seg_w, (int)seg_h, (int)seg_w * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
+	}
+	void reframe() {
+		xPos += xOff;
+		yPos += yOff;
+		xOff = 0;
+		yOff = 0;
+
+		delete segmentBitmap; segmentBitmap = nullptr;
+		openslide_read_region(slide, imgBuff, xPos, yPos, LEVEL, seg_w*3, seg_h*3);
+
+		segmentBitmap = new Bitmap((int)seg_w*3, (int)seg_h*3, (int)seg_w * 3 * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
 	}
 
 	void setSegment(int x, int y) {

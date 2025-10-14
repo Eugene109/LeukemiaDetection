@@ -52,7 +52,8 @@ public:
             DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
         }
         else if (model->getSlideImg()->segmentBitmap->GetLastStatus() == Ok) {
-            graphics.DrawImage(model->getSlideImg()->segmentBitmap, 50, 50);
+            graphics.DrawImage(model->getSlideImg()->segmentBitmap, 50, 50, 640+model->getSlideImg()->xOff, 640+model->getSlideImg()->yOff, 640, 640, UnitPixel);
+            //graphics.DrawImage(model->getSlideImg()->segmentBitmap, 50, 50);
         }
         else {
             LPCSTR error_msg = "Image not found!";

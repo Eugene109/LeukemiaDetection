@@ -92,16 +92,16 @@ public:
         }
         return 0;
     }
-    bool Ldrag; int startPosL_x; int startPosL_y;
+    bool Ldrag; int lastPosL_x; int lastPosL_y;
     bool Rdrag;
     bool Mdrag;
     LRESULT CALLBACK ProcessLButtonDown(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         //sprintf_s(debug, "down x:%d, y:%d\n", LOWORD(lParam), HIWORD(lParam));
         //OutputDebugStringA(debug);
         Ldrag = true;
-        startPosL_x = (int)LOWORD(lParam);
-        startPosL_y = (int)HIWORD(lParam);
-        sprintf_s(debug, "down x:%d, y:%d\n", startPosL_x, startPosL_y);
+        lastPosL_x = (int)LOWORD(lParam);
+        lastPosL_y = (int)HIWORD(lParam);
+        sprintf_s(debug, "down x:%d, y:%d\n", lastPosL_x, lastPosL_y);
         OutputDebugStringA(debug);
 
         //capture mouse input to receive WM_MOUSEMOVE messages outside the window (OPTIONAL)
@@ -111,6 +111,7 @@ public:
     LRESULT CALLBACK ProcessLButtonUp(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         //sprintf_s(debug, "up x:%d, y:%d\n", LOWORD(lParam), HIWORD(lParam));
         //OutputDebugStringA(debug);
+        model->Reframe();
         Ldrag = false;
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -125,13 +126,13 @@ public:
     LRESULT CALLBACK ProcessMouseMove(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if (Ldrag)
         {
-            if(model->getSlideImg()){
-                //sprintf_s(debug, "down x:%f, y:%f\n", startPosL.x, startPosL.y);
-                //OutputDebugStringA(debug);
-                model->getSlideImg()->move(((int)LOWORD(lParam)) - startPosL_x, ((int)HIWORD(lParam)) - startPosL_y);
-                RECT view_rect = { 50, 50, 690, 690 };
-                InvalidateRect(hWnd, &view_rect, TRUE); // move this
-            }
+            //sprintf_s(debug, "down x:%f, y:%f\n", startPosL.x, startPosL.y);
+            //OutputDebugStringA(debug);
+            model->MoveSlide(lastPosL_x-LOWORD(lParam), lastPosL_y - HIWORD(lParam));
+            lastPosL_x = (int)LOWORD(lParam);
+            lastPosL_y = (int)HIWORD(lParam);
+            RECT view_rect = { 50, 50, 690, 690 };
+            InvalidateRect(hWnd, &view_rect, FALSE); // move this
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
     }

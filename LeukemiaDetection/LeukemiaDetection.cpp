@@ -228,6 +228,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
         view->Paint(hWnd);
         break;
+    //case WM_ERASEBKGND:
+        //return 1;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

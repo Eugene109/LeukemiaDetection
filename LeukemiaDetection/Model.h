@@ -17,10 +17,20 @@ protected:
 		slideImg = new SlideImageModel(filename, 640,640,100,27);
 	}
 	void SetImageSegment(int x, int y) {
-		slideImg->setSegment(x, y);
+		if (slideImg)
+			slideImg->setSegment(x, y);
 	}
 	void NextImageSegment() {
-		slideImg->nextSegment();
+		if (slideImg)
+			slideImg->nextSegment();
+	}
+	void MoveSlide(int dx, int dy) {
+		if (slideImg)
+			slideImg->move(dx, dy);
+	}
+	void Reframe() {
+		if (slideImg)
+			slideImg->reframe();
 	}
 
 	void InitCellDetector(LPWSTR filename) {
