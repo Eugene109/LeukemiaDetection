@@ -4,9 +4,14 @@
 
 class VisionModel : public OnnxModel {
 public:
-    VisionModel(std::wstring modelPath) : OnnxModel(modelPath) {}
+    int inputTensorW;
+    int inputTensorH;
+
+    VisionModel(std::wstring modelPath, int w = 640, int h = 640)
+        : OnnxModel(modelPath), inputTensorW(w), inputTensorH(h) {}
     ~VisionModel() {}
 
+    void setInputTensorSize(int w, int h) { inputTensorW = w; inputTensorH = h; }
 
 
     std::vector<float> RunModel(Bitmap* inputFrame) {
@@ -54,7 +59,8 @@ public:
 
         return results;
     }
-
+    
+public:
     Ort::Value toOrtValue(Bitmap* src) {  // Ort::Value is a tensor
         // Convert Bitmap to Ort::Value tensor
         float* pixeldata = new float[3 * src->GetWidth() * src->GetHeight()];
@@ -73,9 +79,6 @@ public:
         return Ort::Value::CreateTensor<float>(memoryInfo, pixeldata, 3 * inputTensorW * inputTensorH, shape.data(), shape.size());
     }
 
-    int inputTensorW = 640;
-    int inputTensorH = 640;
-    void setInputTensorSize(int w, int h) { inputTensorW = w; inputTensorH = h; }
     // returns a new Bitmap that should be deleted by the caller
     Bitmap* preprocessImage(Bitmap* src) {
         Bitmap* scaledBitmap = new Bitmap(inputTensorW, inputTensorH);

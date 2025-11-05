@@ -14,7 +14,7 @@ struct yoloDetectionResult {
 
 class YoloModel : public VisionModel {
 public:
-    YoloModel(std::wstring modelPath) : VisionModel(modelPath) {}
+    YoloModel(std::wstring modelPath) : VisionModel(modelPath, 640, 640) {}
 
     std::vector<yoloDetectionResult> Run(Bitmap* inputFrame) {
         auto start = std::chrono::steady_clock::now();

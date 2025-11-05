@@ -39,9 +39,10 @@ public:
 
 		slide = openslide_open(c_str);
 
+		int levels = openslide_get_level_count(slide);
 		openslide_get_level0_dimensions(slide, &total_w, &total_h);
 		wchar_t buffer[256];
-		wsprintf(buffer, L"openslide image dimensions: width=%d, height=%d\n", (int)total_w, (int)total_h);
+		wsprintf(buffer, L"openslide image dimensions: levels=%d, width=%d, height=%d\n", levels,(int)total_w, (int)total_h);
 		OutputDebugStringW(buffer);
 
 		imgBuff = new uint32_t[640 * 640 * 9];
