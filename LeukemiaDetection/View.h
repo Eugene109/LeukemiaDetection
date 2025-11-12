@@ -30,8 +30,10 @@ protected:
 public:
     HINSTANCE hInst;
     View(Model* appModel, Controller* controllerIn) {
-        model = appModel;
-        controller = controllerIn;
+        if (!model)
+            model = appModel;
+        if (!controller)
+            controller = controllerIn;
     }
     ~View() {}
 
