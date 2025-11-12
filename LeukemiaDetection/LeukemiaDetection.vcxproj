@@ -143,6 +143,7 @@
     <ClInclude Include="CnnModel.h" />
     <ClInclude Include="Controller.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="SlideImageView.h" />
     <ClInclude Include="LeukemiaDetection.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="OnnxModel.h" />
@@ -150,12 +151,15 @@
     <ClInclude Include="Sahi.h" />
     <ClInclude Include="SlideImageModel.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="MainView.h" />
     <ClInclude Include="View.h" />
     <ClInclude Include="VisionModel.h" />
     <ClInclude Include="YoloModel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LeukemiaDetection.cpp" />
+    <ClCompile Include="MainView.cpp" />
+    <ClCompile Include="SlideImageView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="LeukemiaDetection.rc" />

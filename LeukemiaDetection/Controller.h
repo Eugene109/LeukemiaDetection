@@ -131,8 +131,8 @@ public:
             model->MoveSlide(lastPosL_x-LOWORD(lParam), lastPosL_y - HIWORD(lParam));
             lastPosL_x = (int)LOWORD(lParam);
             lastPosL_y = (int)HIWORD(lParam);
-            RECT view_rect = { 50, 50, 690, 690 };
-            InvalidateRect(hWnd, &view_rect, FALSE); // move this
+            //RECT view_rect = { 0, 0, 640, 640 };
+            InvalidateRect(hWnd, 0, FALSE); // move this
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
     }

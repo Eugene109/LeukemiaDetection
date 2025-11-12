@@ -45,7 +45,7 @@
     <ClInclude Include="SlideImageModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="View.h">
+    <ClInclude Include="MainView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
@@ -54,9 +54,21 @@
     <ClInclude Include="CnnModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SlideImageView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="View.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LeukemiaDetection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SlideImageView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
