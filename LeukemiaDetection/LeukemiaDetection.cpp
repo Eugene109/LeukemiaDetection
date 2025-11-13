@@ -35,22 +35,6 @@ using namespace Windows::Storage;
 #include "View.h"
 #include "Controller.h"
 
-#define MAX_LOADSTRING 100
-
-// Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-
-// Forward declarations of functions included in this code module:
-//ATOM                RegisterClasses(HINSTANCE hInstance);
-//BOOL                InitInstance(HINSTANCE, int);
-//LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-//LRESULT CALLBACK    ImgViewProc(HWND, UINT, WPARAM, LPARAM);
-
-Model* model;
-MainView* view;
-Controller* controller;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -70,13 +54,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
+    HINSTANCE hInst;                                // current instance
+
+    Model* model;
+    MainView* view;
+    Controller* controller;
+
     model = new Model();
     controller = new Controller(hInstance, model);
     view = new MainView(model, controller);
 
-    // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_LEUKEMIADETECTION, szWindowClass, MAX_LOADSTRING);
+
     view->RegisterClasses(hInstance);
 
     // Perform application initialization:
