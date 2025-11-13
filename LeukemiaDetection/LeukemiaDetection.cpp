@@ -43,13 +43,13 @@ WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 
 // Forward declarations of functions included in this code module:
-ATOM                RegisterClasses(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK    ImgViewProc(HWND, UINT, WPARAM, LPARAM);
+//ATOM                RegisterClasses(HINSTANCE hInstance);
+//BOOL                InitInstance(HINSTANCE, int);
+//LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
+//LRESULT CALLBACK    ImgViewProc(HWND, UINT, WPARAM, LPARAM);
 
 Model* model;
-View* view;
+MainView* view;
 Controller* controller;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -71,16 +71,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     model = new Model();
-    view = new View(model);
     controller = new Controller(hInstance, model);
+    view = new MainView(model, controller);
 
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_LEUKEMIADETECTION, szWindowClass, MAX_LOADSTRING);
-    RegisterClasses(hInstance);
+    view->RegisterClasses(hInstance);
 
     // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
+    if (!view->InitInstance(hInstance, nCmdShow))
     {
         return FALSE;
     }
@@ -109,192 +109,3 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int) msg.wParam;
 }
 
-
-
-//
-//  FUNCTION: RegisterClasses()
-//
-//  PURPOSE: Registers the window classes.
-//
-ATOM RegisterClasses(HINSTANCE hInstance)
-{
-    WNDCLASSEXW wcex;
-
-        wcex.cbSize = sizeof(WNDCLASSEX);
-
-        wcex.style          = CS_HREDRAW | CS_VREDRAW;
-        wcex.lpfnWndProc    = WndProc;
-        wcex.cbClsExtra     = 0;
-        wcex.cbWndExtra     = 0;
-        wcex.hInstance      = hInstance;
-        wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LEUKEMIADETECTION));
-        wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-        wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-        wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_LEUKEMIADETECTION);
-        wcex.lpszClassName  = szWindowClass;
-        wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    RegisterClassExW(&wcex);
-
-        wcex.cbSize = sizeof(WNDCLASSEX);
-
-        wcex.style = CS_HREDRAW | CS_VREDRAW;
-        wcex.lpfnWndProc = ImgViewProc;
-        wcex.cbClsExtra = 0;
-        wcex.cbWndExtra = 0;
-        wcex.hInstance = hInstance;
-        //wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LEUKEMIADETECTION));
-        wcex.hCursor = LoadCursor(nullptr, IDC_SIZEALL);
-        wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW - 1);
-        wcex.lpszMenuName = 0;
-        wcex.lpszClassName = L"Image Scope";
-        //wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    RegisterClassExW(&wcex);
-
-        wcex.cbSize = sizeof(WNDCLASSEX);
-
-        wcex.style = CS_HREDRAW | CS_VREDRAW;
-        wcex.lpfnWndProc = WndProc;
-        wcex.cbClsExtra = 0;
-        wcex.cbWndExtra = 0;
-        wcex.hInstance = hInstance;
-        //wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LEUKEMIADETECTION));
-        wcex.hCursor = LoadCursor(nullptr, IDC_SIZEALL);
-        wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW - 1);
-        wcex.lpszMenuName = 0;
-        wcex.lpszClassName = L"Image Scope";
-        //wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    return RegisterClassExW(&wcex);
-}
-
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   hInst = hInstance; // Store instance handle in our global variable
-
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, 1200, 800, nullptr, nullptr, hInstance, nullptr);
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE,
-       50, 50, 640, 640, hWnd, (HMENU)67, hInstance, nullptr);
-   CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_VISIBLE,
-       50, 50, 100, 50, hWnd, (HMENU)69, hInstance, nullptr);
-
-   CreateWindowEx(0, L"STATIC", L"Name:",
-       WS_CHILD | WS_VISIBLE, 810, 10, 60, 20,
-       hWnd, (HMENU)1, hInst, nullptr);
-
-   CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"best.onnx",
-       WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
-       880, 10, 150, 20,
-       hWnd, (HMENU)2, hInst, nullptr);
-
-   CreateWindowEx(0, L"BUTTON", L"Submit",
-       WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-       1040, 10, 80, 25,
-       hWnd, (HMENU)3, hInst, nullptr);
-
-
-   CreateWindowEx(0, L"STATIC", L"Segment X:",
-       WS_CHILD | WS_VISIBLE, 810, 70, 80, 20,
-       hWnd, (HMENU)4, hInst, nullptr);
-
-   controller->textInput_x =CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"100",
-       WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
-       900, 70, 130, 20,
-       hWnd, (HMENU)IDC_SEGMENT_X, hInst, nullptr);
-
-   CreateWindowEx(0, L"STATIC", L"Segment Y:",
-       WS_CHILD | WS_VISIBLE, 810, 100, 80, 20,
-       hWnd, (HMENU)6, hInst, nullptr);
-
-   controller->textInput_y = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"27",
-       WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
-       900, 100, 130, 20,
-       hWnd, (HMENU)IDC_SEGMENT_Y, hInst, nullptr);
-
-   CreateWindowEx(0, L"BUTTON", L"Move",
-       WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-       950, 130, 80, 25,
-       hWnd, (HMENU)IDC_MOVE_SEGMENT, hInst, nullptr);
-
-   CreateWindowEx(0, L"TRACKBAR", L"",
-       WS_CHILD | WS_VISIBLE, 810, 160, 80, 20,
-       hWnd, (HMENU)8, hInst, nullptr);
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    case WM_COMMAND:
-        return controller->ProcessCommand(hWnd, message, wParam, lParam);
-        break;
-    case WM_PAINT:
-        view->Paint(hWnd);
-        break;
-    //case WM_ERASEBKGND:
-        //return 1;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
-}
-
-
-LRESULT CALLBACK ImgViewProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    case WM_COMMAND:
-        return controller->ProcessCommand(hWnd, message, wParam, lParam);
-        break;
-
-    case WM_LBUTTONDOWN:
-        return controller->ProcessLButtonDown(hWnd, message, wParam, lParam);
-    case WM_LBUTTONUP:
-        return controller->ProcessLButtonUp(hWnd, message, wParam, lParam);
-    case WM_RBUTTONDOWN:
-        return controller->ProcessRButtonDown(hWnd, message, wParam, lParam);
-    case WM_RBUTTONUP:
-        return controller->ProcessRButtonUp(hWnd, message, wParam, lParam);
-    case WM_MOUSEMOVE:
-        return controller->ProcessMouseMove(hWnd, message, wParam, lParam);
-        break;
-    case WM_PAINT:
-        view->PaintImageViewer(hWnd);
-        break;
-        //case WM_ERASEBKGND:
-            //return 1;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
-}

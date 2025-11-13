@@ -3,6 +3,9 @@
 
 ATOM MainView::RegisterClasses(HINSTANCE hInstance)
 {
+    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_LEUKEMIADETECTION, szWindowClass, MAX_LOADSTRING);
+
     WNDCLASSEXW wcex;
 
     wcex.cbSize = sizeof(WNDCLASSEX);
@@ -33,7 +36,7 @@ ATOM MainView::RegisterClasses(HINSTANCE hInstance)
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
-BOOL MainView::InitInstance(HINSTANCE hInstance, HWND parent = nullptr)
+BOOL MainView::InitInstance(HINSTANCE hInstance, int nCmdShow, HWND parent)
 {
     hInst = hInstance; // Store instance handle in our global variable
 
@@ -45,10 +48,8 @@ BOOL MainView::InitInstance(HINSTANCE hInstance, HWND parent = nullptr)
         return FALSE;
     }
 
-    CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE,
-        50, 50, 640, 640, hWnd, (HMENU)67, hInstance, nullptr);
-    CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_VISIBLE,
-        50, 50, 100, 50, hWnd, (HMENU)69, hInstance, nullptr);
+    SlideImageView slideImageView = SlideImageView(hInstance);
+    slideImageView.InitInstance(0,0,640,640, hInstance, nCmdShow, hWnd);
 
     CreateWindowEx(0, L"STATIC", L"Name:",
         WS_CHILD | WS_VISIBLE, 810, 10, 60, 20,
@@ -106,7 +107,7 @@ LRESULT CALLBACK MainView::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
         return controller->ProcessCommand(hWnd, message, wParam, lParam);
         break;
     case WM_PAINT:
-        view->Paint(hWnd);
+        Paint(hWnd);
         break;
         //case WM_ERASEBKGND:
             //return 1;

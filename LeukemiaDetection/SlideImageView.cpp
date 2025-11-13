@@ -1,6 +1,24 @@
 #pragma once
 #include "View.h"
 
+BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent) {
+
+    HWND hWnd = CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE | WS_BORDER,
+        x,y,w,h, parent, (HMENU)20429, hInstance, nullptr);
+
+    if (!hWnd)
+    {
+        OutputDebugStringW(L"SLIDEIMAGEVIEW FAILED");
+    }else{
+        OutputDebugStringW(L"SLIDEIMAGEVIEW INIT");
+    }
+
+    CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_VISIBLE,
+        24, 24, 150, 50, hWnd, (HMENU)67, hInstance, nullptr);
+
+    return TRUE;
+}
+
 ATOM SlideImageView::RegisterClasses(HINSTANCE hInstance)
 {
     WNDCLASSEXW wcex;
@@ -11,18 +29,32 @@ ATOM SlideImageView::RegisterClasses(HINSTANCE hInstance)
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
     wcex.hInstance = hInstance;
-    //wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LEUKEMIADETECTION));
+    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LEUKEMIADETECTION));
     wcex.hCursor = LoadCursor(nullptr, IDC_SIZEALL);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW - 1);
     wcex.lpszMenuName = 0;
     wcex.lpszClassName = L"Image Scope";
-    //wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    RegisterClassExW(&wcex);
+
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = NavWndProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance = hInstance;
+    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LEUKEMIADETECTION));
+    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW +1);
+    wcex.lpszMenuName = 0;
+    wcex.lpszClassName = L"Image Navigation";
+    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     return RegisterClassExW(&wcex);
 }
 
 
-static LRESULT CALLBACK SlideImageView::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+
+LRESULT CALLBACK SlideImageView::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
@@ -56,7 +88,7 @@ static LRESULT CALLBACK SlideImageView::WndProc(HWND hWnd, UINT message, WPARAM 
 }
 
 
-static BOOL SlideImageView::Paint(HWND hWnd) {
+BOOL SlideImageView::Paint(HWND hWnd) {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hWnd, &ps);
 
@@ -64,7 +96,7 @@ static BOOL SlideImageView::Paint(HWND hWnd) {
 
     if (model->getSlideImg() == nullptr) {
         LPCSTR error_msg = "Open an image file (File->Open Image)";
-        RECT error_rect = { 0, 0, 350, 100 };
+        RECT error_rect = { 50, 320, 350, 400 };
         DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
     }
     else if (model->getSlideImg()->segmentBitmap->GetLastStatus() == Ok) {
@@ -73,7 +105,7 @@ static BOOL SlideImageView::Paint(HWND hWnd) {
     }
     else {
         LPCSTR error_msg = "Image not found!";
-        RECT error_rect = { 0, 0, 350, 100 };
+        RECT error_rect = { 50, 320, 350, 400 };
         DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
     }
     if (model->getCellResults().size()) {
@@ -92,6 +124,42 @@ static BOOL SlideImageView::Paint(HWND hWnd) {
             std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
             DrawTextA(hdc, title.c_str(), -1, &rect, DT_TOP);
         }
+    }
+
+    return EndPaint(hWnd, &ps);
+}
+
+LRESULT CALLBACK SlideImageView::NavWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message)
+    {
+    case WM_COMMAND:
+        return controller->ProcessCommand(hWnd, message, wParam, lParam);
+        break;
+    case WM_PAINT:
+        PaintNav(hWnd);
+        break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+    return 0;
+}
+
+BOOL SlideImageView::PaintNav(HWND hWnd) {
+    PAINTSTRUCT ps;
+    HDC hdc = BeginPaint(hWnd, &ps);
+
+    if (model->getSlideImg() && model->getSlideImg()->segmentBitmap->GetLastStatus() == Ok) {
+        LPCSTR temp_msg = "something about zoom here";
+        RECT rect = { 0, 0, 350, 100 };
+        DrawTextA(hdc, temp_msg, -1, &rect, DT_TOP);
+    }
+    else {
+        LPCSTR temp_msg = "nav";
+        RECT rect = { 0, 0, 350, 100 };
+        DrawTextA(hdc, temp_msg, -1, &rect, DT_TOP);
     }
 
     return EndPaint(hWnd, &ps);

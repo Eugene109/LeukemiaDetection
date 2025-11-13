@@ -12,11 +12,6 @@
 
 using namespace Gdiplus;
 
-using namespace winrt;
-using namespace Windows::AI::MachineLearning;
-using namespace Windows::Foundation;
-using namespace Windows::Storage;
-
 #include "framework.h"
 #include "LeukemiaDetection.h"
 
@@ -25,8 +20,8 @@ using namespace Windows::Storage;
 
 class View {
 protected:
-    static Model* model;
-    static Controller* controller;
+    inline static Model* model = nullptr;
+    inline static Controller* controller = nullptr;
 public:
     HINSTANCE hInst;
     View(Model* appModel, Controller* controllerIn) {
@@ -35,12 +30,13 @@ public:
         if (!controller)
             controller = controllerIn;
     }
+    View() {}
     ~View() {}
 
-    
-    virtual BOOL InitInstance(HINSTANCE hInstance, HWND parent = nullptr);
 
-    virtual ATOM RegisterClasses(HINSTANCE hInstance);
+    virtual BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND parent = nullptr) { return TRUE; }
+
+    virtual ATOM RegisterClasses(HINSTANCE hInstance) { return 0; }
 
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -49,19 +45,29 @@ public:
 
 
 #define MAX_LOADSTRING 100
-class MainView : View {
+class MainView : public View {
     WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
     WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 public:
-    BOOL InitInstance(HINSTANCE hInstance, HWND parent = nullptr);
+    MainView(Model* appModel, Controller* controllerIn) : View(appModel, controllerIn) {
+    }
+
+    BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND parent = nullptr);
     ATOM RegisterClasses(HINSTANCE hInstance);
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     static BOOL Paint(HWND hWnd);
 };
 
-class SlideImageView : View {
-    BOOL InitInstance(HINSTANCE hInstance, HWND parent = nullptr);
+class SlideImageView : public View {
+public:
+    SlideImageView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
     ATOM RegisterClasses(HINSTANCE hInstance);
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     static BOOL Paint(HWND hWnd);
+    static LRESULT CALLBACK NavWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL PaintNav(HWND hWnd);
 };

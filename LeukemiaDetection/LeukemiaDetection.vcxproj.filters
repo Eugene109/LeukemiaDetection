@@ -42,19 +42,10 @@
     <ClInclude Include="Controller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SlideImageModel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MainView.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CnnModel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SlideImageView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="View.h">
