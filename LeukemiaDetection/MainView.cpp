@@ -36,62 +36,30 @@ ATOM MainView::RegisterClasses(HINSTANCE hInstance)
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
-BOOL MainView::InitInstance(HINSTANCE hInstance, int nCmdShow, HWND parent)
+BOOL MainView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent)
 {
     hInst = hInstance; // Store instance handle in our global variable
 
-    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, 1200, 800, parent, nullptr, hInstance, nullptr);
+    hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+        x,y,w,h, parent, nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
         return FALSE;
     }
+    RECT wndDim;
+    GetClientRect(hWnd, &wndDim);
+    int wndH = (wndDim.bottom - wndDim.top);
+    int wndW = (wndDim.right - wndDim.left);
 
-    SlideImageView slideImageView = SlideImageView(hInstance);
-    slideImageView.InitInstance(0,0,640,640, hInstance, nCmdShow, hWnd);
+    TabView tabView(hInstance);
+    tabView.InitInstance(0, 0, 640, wndH-25, hInstance, nCmdShow, hWnd);
 
-    CreateWindowEx(0, L"STATIC", L"Name:",
-        WS_CHILD | WS_VISIBLE, 810, 10, 60, 20,
-        hWnd, (HMENU)1, hInst, nullptr);
+    ControlPanelView controlPanelView(hInstance);
+    controlPanelView.InitInstance(640,0, wndW-640, wndH-25, hInstance, nCmdShow, hWnd);
 
-    CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"best.onnx",
-        WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
-        880, 10, 150, 20,
-        hWnd, (HMENU)2, hInst, nullptr);
-
-    CreateWindowEx(0, L"BUTTON", L"Submit",
-        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        1040, 10, 80, 25,
-        hWnd, (HMENU)3, hInst, nullptr);
-
-
-    CreateWindowEx(0, L"STATIC", L"Segment X:",
-        WS_CHILD | WS_VISIBLE, 810, 70, 80, 20,
-        hWnd, (HMENU)4, hInst, nullptr);
-
-    controller->textInput_x = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"100",
-        WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
-        900, 70, 130, 20,
-        hWnd, (HMENU)IDC_SEGMENT_X, hInst, nullptr);
-
-    CreateWindowEx(0, L"STATIC", L"Segment Y:",
-        WS_CHILD | WS_VISIBLE, 810, 100, 80, 20,
-        hWnd, (HMENU)6, hInst, nullptr);
-
-    controller->textInput_y = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"27",
-        WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
-        900, 100, 130, 20,
-        hWnd, (HMENU)IDC_SEGMENT_Y, hInst, nullptr);
-
-    CreateWindowEx(0, L"BUTTON", L"Move",
-        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        950, 130, 80, 25,
-        hWnd, (HMENU)IDC_MOVE_SEGMENT, hInst, nullptr);
-
-    CreateWindowEx(0, L"TRACKBAR", L"",
-        WS_CHILD | WS_VISIBLE, 810, 160, 80, 20,
-        hWnd, (HMENU)8, hInst, nullptr);
+    StatusBarView statusBarView(hInstance);
+    statusBarView.InitInstance(0, wndH - 25, wndW, 25, hInstance, nCmdShow, hWnd);
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);

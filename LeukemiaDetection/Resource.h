@@ -8,7 +8,10 @@
 #define IDD_ABOUTBOX                    103
 #define IDM_ABOUT                       104
 #define IDD_DIALOGBAR                   104
+#define IDS_IMAGE_SCOPE_TAB             104
 #define IDM_EXIT                        105
+#define IDS_CELL_LIST_TAB               105
+#define IDS_MALIGNANT_CELLS_TAB         106
 #define IDI_LEUKEMIADETECTION           107
 #define IDI_SMALL                       108
 #define IDC_LEUKEMIADETECTION           109

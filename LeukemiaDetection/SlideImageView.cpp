@@ -3,8 +3,8 @@
 
 BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent) {
 
-    HWND hWnd = CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE | WS_BORDER,
-        x,y,w,h, parent, (HMENU)20429, hInstance, nullptr);
+    hWnd = CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE | WS_BORDER,
+        x,y,w,h+2/*absolute magic who cares*/, parent, (HMENU)20429, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -91,6 +91,7 @@ LRESULT CALLBACK SlideImageView::WndProc(HWND hWnd, UINT message, WPARAM wParam,
 BOOL SlideImageView::Paint(HWND hWnd) {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hWnd, &ps);
+    //HDC hdc = GetDC(hWnd);
 
     Graphics graphics(hdc);
 
@@ -127,6 +128,8 @@ BOOL SlideImageView::Paint(HWND hWnd) {
     }
 
     return EndPaint(hWnd, &ps);
+    //SwapBuffers(hdc);
+    //return ReleaseDC(hWnd, hdc);
 }
 
 LRESULT CALLBACK SlideImageView::NavWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {

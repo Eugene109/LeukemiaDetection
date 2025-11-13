@@ -27,6 +27,7 @@ using namespace Windows::Storage;
 
 #pragma comment (lib, "gdiplus.lib")
 #pragma comment (lib, "onnxruntime.lib")
+#pragma comment (lib, "comctl32.lib")
 
 #include "framework.h"
 #include "LeukemiaDetection.h"
@@ -68,7 +69,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     view->RegisterClasses(hInstance);
 
     // Perform application initialization:
-    if (!view->InitInstance(hInstance, nCmdShow))
+    if (!view->InitInstance(CW_USEDEFAULT, 0, 1200, 800, hInstance, nCmdShow))
     {
         return FALSE;
     }

@@ -7,6 +7,7 @@
 
 #include <windows.h>
 #include <gdiplus.h>
+#include <commctrl.h>
 
 #include <vector>
 
@@ -24,6 +25,7 @@ protected:
     inline static Controller* controller = nullptr;
 public:
     HINSTANCE hInst;
+    HWND hWnd;
     View(Model* appModel, Controller* controllerIn) {
         if (!model)
             model = appModel;
@@ -33,13 +35,9 @@ public:
     View() {}
     ~View() {}
 
-
-    virtual BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND parent = nullptr) { return TRUE; }
-
+    virtual BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent = nullptr) { return TRUE; }
     virtual ATOM RegisterClasses(HINSTANCE hInstance) { return 0; }
-
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
     static BOOL Paint(HWND hWnd);
 };
 
@@ -49,18 +47,18 @@ class MainView : public View {
     WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
     WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 public:
-    MainView(Model* appModel, Controller* controllerIn) : View(appModel, controllerIn) {
-    }
 
-    BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND parent = nullptr);
+    MainView(Model* appModel, Controller* controllerIn) : View(appModel, controllerIn) {}
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent = nullptr);
     ATOM RegisterClasses(HINSTANCE hInstance);
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     static BOOL Paint(HWND hWnd);
 };
 
-class SlideImageView : public View {
+class ControlPanelView : public View {
 public:
-    SlideImageView(HINSTANCE hInstance) {
+    ControlPanelView(HINSTANCE hInstance) {
         RegisterClasses(hInstance);
     }
 
@@ -68,6 +66,63 @@ public:
     ATOM RegisterClasses(HINSTANCE hInstance);
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     static BOOL Paint(HWND hWnd);
+};
+
+
+class TabView : public View {
+#define NUM_TABS 2
+    inline static HWND tabDisplays[NUM_TABS] = { 0 };
+    inline static HWND hTabWnd = 0;
+public:
+    TabView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL OnNotify(HWND hwndTab, HWND hwndDisplay, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
+
+
+class SlideImageView : public View {
+public:
+    SlideImageView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+    operator HWND() const { return hWnd; }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
     static LRESULT CALLBACK NavWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     static BOOL PaintNav(HWND hWnd);
+};
+
+class CellListView : public View {
+public:
+    CellListView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+    
+    operator HWND() const { return hWnd; }
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
+
+
+class StatusBarView : public View {
+public:
+    StatusBarView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
 };
