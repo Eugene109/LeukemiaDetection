@@ -51,6 +51,9 @@
     <ClInclude Include="View.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SlideImageModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LeukemiaDetection.cpp">
@@ -72,6 +75,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CellListView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MalignantCellsView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StatisticsView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

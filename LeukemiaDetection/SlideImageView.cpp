@@ -4,7 +4,7 @@
 BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent) {
 
     hWnd = CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE | WS_BORDER,
-        x,y,w,h+2/*absolute magic who cares*/, parent, (HMENU)20429, hInstance, nullptr);
+        x,y,w,h/*absolute magic who cares*/, parent, (HMENU)20429, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -13,8 +13,8 @@ BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstanc
         OutputDebugStringW(L"SLIDEIMAGEVIEW INIT");
     }
 
-    CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_VISIBLE,
-        24, 24, 150, 50, hWnd, (HMENU)67, hInstance, nullptr);
+    CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_VISIBLE | WS_BORDER,
+        10, 10, 150, 50, hWnd, (HMENU)67, hInstance, nullptr);
 
     return TRUE;
 }

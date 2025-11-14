@@ -26,6 +26,7 @@ protected:
 public:
     HINSTANCE hInst;
     HWND hWnd;
+    operator HWND() const { return hWnd; }
     View(Model* appModel, Controller* controllerIn) {
         if (!model)
             model = appModel;
@@ -70,7 +71,7 @@ public:
 
 
 class TabView : public View {
-#define NUM_TABS 2
+#define NUM_TABS 4
     inline static HWND tabDisplays[NUM_TABS] = { 0 };
     inline static HWND hTabWnd = 0;
 public:
@@ -91,7 +92,6 @@ public:
     SlideImageView(HINSTANCE hInstance) {
         RegisterClasses(hInstance);
     }
-    operator HWND() const { return hWnd; }
 
     BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
     ATOM RegisterClasses(HINSTANCE hInstance);
@@ -107,7 +107,30 @@ public:
         RegisterClasses(hInstance);
     }
     
-    operator HWND() const { return hWnd; }
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
+
+class MalignantCellsView : public View {
+public:
+    MalignantCellsView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
+
+class StatisticsView : public View {
+public:
+    StatisticsView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
     BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
     ATOM RegisterClasses(HINSTANCE hInstance);
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

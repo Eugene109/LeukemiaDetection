@@ -13,6 +13,7 @@
 #define IDS_CELL_LIST_TAB               105
 #define IDS_MALIGNANT_CELLS_TAB         106
 #define IDI_LEUKEMIADETECTION           107
+#define IDS_STATISTICS_TAB              107
 #define IDI_SMALL                       108
 #define IDC_LEUKEMIADETECTION           109
 #define IDC_SEGMENT_X                   110

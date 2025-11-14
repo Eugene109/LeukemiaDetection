@@ -60,14 +60,24 @@ BOOL TabView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int 
     //return hwndStatic;
     //return hwndTab;
 
+    GetClientRect(hTabWnd, &rcClient);
+
+
     SlideImageView imageScope(hInstance);
     imageScope.InitInstance(0, 0, rcClient.right, rcClient.bottom - 25, hInstance, nCmdShow, hTabWnd);
     tabDisplays[0] = imageScope;
 
-    GetClientRect(hTabWnd, &rcClient);
     CellListView cellList(hInstance);
     cellList.InitInstance(0, 0, rcClient.right, rcClient.bottom - 25, hInstance, nCmdShow, hTabWnd);
     tabDisplays[1] = cellList;
+
+    MalignantCellsView malignantCells(hInstance);
+    malignantCells.InitInstance(0, 0, rcClient.right, rcClient.bottom - 25, hInstance, nCmdShow, hTabWnd);
+    tabDisplays[2] = malignantCells;
+
+    StatisticsView statsView(hInstance);
+    statsView.InitInstance(0, 0, rcClient.right, rcClient.bottom - 25, hInstance, nCmdShow, hTabWnd);
+    tabDisplays[3] = statsView;
 
     for (int i = 0; i < NUM_TABS; i++) {
         ShowWindow(tabDisplays[i], SW_HIDE);

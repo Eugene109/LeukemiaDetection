@@ -69,7 +69,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     view->RegisterClasses(hInstance);
 
     // Perform application initialization:
-    if (!view->InitInstance(CW_USEDEFAULT, 0, 1200, 800, hInstance, nCmdShow))
+    if (!view->InitInstance(CW_USEDEFAULT, 0, 1000, 750, hInstance, nCmdShow))
     {
         return FALSE;
     }
