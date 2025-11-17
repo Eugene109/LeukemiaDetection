@@ -14,7 +14,7 @@ protected:
 	std::vector<yoloDetectionResult> cellResults;
 	
 	void InitSlideImg(LPWSTR filename) {
-		slideImg = new SlideImageModel(filename, 640,640,100,27);
+		slideImg = new SlideImageModel(filename, 640,640,2,2);
 	}
 	void SetImageSegment(int x, int y) {
 		if (slideImg)

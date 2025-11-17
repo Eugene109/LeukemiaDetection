@@ -3,7 +3,7 @@
 
 BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent) {
 
-    hWnd = CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE | WS_BORDER,
+    hWnd = CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_CLIPCHILDREN,
         x,y,w,h/*absolute magic who cares*/, parent, (HMENU)20429, hInstance, nullptr);
 
     if (!hWnd)
@@ -64,12 +64,16 @@ LRESULT CALLBACK SlideImageView::WndProc(HWND hWnd, UINT message, WPARAM wParam,
 
     case WM_LBUTTONDOWN:
         return controller->ProcessLButtonDown(hWnd, message, wParam, lParam);
+        break;
     case WM_LBUTTONUP:
         return controller->ProcessLButtonUp(hWnd, message, wParam, lParam);
+        break;
     case WM_RBUTTONDOWN:
         return controller->ProcessRButtonDown(hWnd, message, wParam, lParam);
+        break;
     case WM_RBUTTONUP:
         return controller->ProcessRButtonUp(hWnd, message, wParam, lParam);
+        break;
     case WM_MOUSEMOVE:
         return controller->ProcessMouseMove(hWnd, message, wParam, lParam);
         break;
@@ -91,31 +95,43 @@ LRESULT CALLBACK SlideImageView::WndProc(HWND hWnd, UINT message, WPARAM wParam,
 BOOL SlideImageView::Paint(HWND hWnd) {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hWnd, &ps);
-    //HDC hdc = GetDC(hWnd);
 
-    Graphics graphics(hdc);
+    RECT clientRect;
+    GetClientRect(hWnd, &clientRect);
+    int width = clientRect.right - clientRect.left;
+    int height = clientRect.bottom - clientRect.top;
+    if (width <= 0) width = 1;
+    if (height <= 0) height = 1;
 
+    // memdc is draw buff
+    HDC memDC = CreateCompatibleDC(hdc);
+    HBITMAP memBmp = CreateCompatibleBitmap(hdc, width, height);
+    HBITMAP oldBmp = (HBITMAP)SelectObject(memDC, memBmp);
+
+    HBRUSH hbr = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    FillRect(memDC, &clientRect, hbr);
+
+    Graphics graphics(memDC);
+
+    // draw on memdc
     if (model->getSlideImg() == nullptr) {
         LPCSTR error_msg = "Open an image file (File->Open Image)";
         RECT error_rect = { 50, 320, 350, 400 };
-        DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
+        DrawTextA(memDC, error_msg, -1, &error_rect, DT_TOP);
     }
     else if (model->getSlideImg()->segmentBitmap->GetLastStatus() == Ok) {
         graphics.DrawImage(model->getSlideImg()->segmentBitmap, 0, 0, 640 + model->getSlideImg()->xOff, 640 + model->getSlideImg()->yOff, 640, 640, UnitPixel);
-        //graphics.DrawImage(model->getSlideImg()->segmentBitmap, 0, 0);
     }
     else {
         LPCSTR error_msg = "Image not found!";
         RECT error_rect = { 50, 320, 350, 400 };
-        DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
+        DrawTextA(memDC, error_msg, -1, &error_rect, DT_TOP);
     }
     if (model->getCellResults().size()) {
         graphics.Clear(Color(255, 255, 255));
 
         //TODO: clean this part up, direct call of a member function goes against MVC
         Bitmap* preprocessedImage = model->getCellDetector()->preprocessImage(model->getSlideImg()->segmentBitmap);
-        //
-
         graphics.DrawImage(preprocessedImage, 0, 0);
         delete preprocessedImage;
         for (auto& det : model->getCellResults()) {
@@ -123,13 +139,19 @@ BOOL SlideImageView::Paint(HWND hWnd) {
             graphics.DrawRectangle(pen, det.box);
             RECT rect = { det.box.X , det.box.Y, det.box.X + det.box.Width, det.box.Y + det.box.Height };
             std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
-            DrawTextA(hdc, title.c_str(), -1, &rect, DT_TOP);
+            DrawTextA(memDC, title.c_str(), -1, &rect, DT_TOP);
         }
     }
 
+    // blit buffers
+    BitBlt(hdc, 0, 0, width, height, memDC, 0, 0, SRCCOPY);
+
+    // delete
+    SelectObject(memDC, oldBmp);
+    DeleteObject(memBmp);
+    DeleteDC(memDC);
+
     return EndPaint(hWnd, &ps);
-    //SwapBuffers(hdc);
-    //return ReleaseDC(hWnd, hdc);
 }
 
 LRESULT CALLBACK SlideImageView::NavWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -138,6 +160,17 @@ LRESULT CALLBACK SlideImageView::NavWndProc(HWND hWnd, UINT message, WPARAM wPar
     case WM_COMMAND:
         return controller->ProcessCommand(hWnd, message, wParam, lParam);
         break;
+
+    case WM_LBUTTONUP:
+        return controller->ProcessLButtonUp(hWnd, message, wParam, lParam);
+        break;
+    case WM_RBUTTONUP:
+        return controller->ProcessRButtonUp(hWnd, message, wParam, lParam);
+        break;
+    case WM_MOUSEMOVE:
+        return controller->ProcessMouseMove(hWnd, message, wParam, lParam);
+        break;
+        
     case WM_PAINT:
         PaintNav(hWnd);
         break;
