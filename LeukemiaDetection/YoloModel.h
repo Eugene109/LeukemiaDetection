@@ -16,14 +16,14 @@ class YoloModel : public VisionModel {
 public:
     YoloModel(std::wstring modelPath) : VisionModel(modelPath, 640, 640) {}
 
-    std::vector<yoloDetectionResult> Run(Bitmap* inputFrame) {
+    std::vector<yoloDetectionResult> Run(Bitmap* inputFrame, int offsetX = 0, int offsetY = 0) {
         auto start = std::chrono::steady_clock::now();
         std::vector<float> results = RunModel(inputFrame);
         auto end = std::chrono::steady_clock::now();
 
         // Load labels and print result
         //OutputDebugStringW(L"Output from inference:\n");
-        std::vector<yoloDetectionResult> detectionResults = parseYoloOutput(results, inputFrame->GetWidth(), inputFrame->GetHeight());
+        std::vector<yoloDetectionResult> detectionResults = parseYoloOutput(results, inputFrame->GetWidth(), inputFrame->GetHeight(), offsetX, offsetY);
         //auto labels = LoadLabels();
         //TODO: load labels and parse data
         
@@ -43,7 +43,7 @@ public:
     
     //int num_detections = 756;
     int num_detections = 8400;
-    std::vector<yoloDetectionResult> parseYoloOutput(std::vector<float> &results, int origW, int origH) {
+    std::vector<yoloDetectionResult> parseYoloOutput(std::vector<float> &results, int origW, int origH, int offsetX = 0, int offsetY = 0) {
         int num_classes = results.size() / num_detections - 4;
         std::vector<yoloDetectionResult> output;
         for (int p = 0; p < num_detections; p++) {
@@ -57,8 +57,8 @@ public:
                 }
             }
             if (bestScore > 0.2) {
-                float x1 = (results[p + 0 * num_detections] - results[p + 2 * num_detections] / 2) ;
-                float y1 = (results[p + 1 * num_detections] - results[p + 3 * num_detections] / 2) ;
+                float x1 = (results[p + 0 * num_detections] - results[p + 2 * num_detections] / 2) +offsetX;
+                float y1 = (results[p + 1 * num_detections] - results[p + 3 * num_detections] / 2) +offsetY;
                 float w = (results[p + 2 * num_detections]);
                 float h = (results[p + 3 * num_detections]);
                 yoloDetectionResult det;
