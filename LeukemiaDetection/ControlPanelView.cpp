@@ -17,11 +17,16 @@ BOOL ControlPanelView::InitInstance(int x, int y, int w, int h, HINSTANCE hInsta
         OutputDebugStringW(L"ControlPanelView INIT");
     }
 
-    CreateWindowEx(0, L"STATIC", L"Name:",
+    CreateWindowEx(0, L"BUTTON", L"Run Model",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        10, 10, 200, 50,
+        hWnd, (HMENU)ID_TOOLS_RUNMODEL, hInst, nullptr);
+
+    CreateWindowEx(0, L"STATIC", L"Model:",
         WS_CHILD | WS_VISIBLE, 10, 10, 60, 20,
         hWnd, (HMENU)1, hInst, nullptr);
 
-    CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"best.onnx",
+    CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"yolo11.onnx",
         WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
         80, 10, 150, 20,
         hWnd, (HMENU)2, hInst, nullptr);

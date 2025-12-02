@@ -13,9 +13,36 @@ BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstanc
         OutputDebugStringW(L"SLIDEIMAGEVIEW INIT");
     }
 
-    CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_VISIBLE | WS_BORDER,
-        10, 10, 150, 50, hWnd, (HMENU)67, hInstance, nullptr);
 
+    controller->nav = CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_BORDER,
+        10, 10, 150, 50, hWnd, (HMENU)67, hInstance, nullptr);
+    /*int iSelMin = 2;
+    int iSelMax = 4;*/
+    controller->zoomBar = CreateWindowEx(0, TRACKBAR_CLASS, L"zoom", WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
+        10, 10, 130, 30, controller->nav, (HMENU)IDC_ZOOM_BAR, hInstance, NULL);
+    
+    SetFocus(controller->zoomBar);
+
+
+
+    /*CreateWindowEx(0, L"BUTTON", L"0",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        10, 15, 25, 25,
+        controller->nav, (HMENU)IDC_SET_LEVEL_0, hInstance, nullptr);
+
+    CreateWindowEx(0, L"BUTTON", L"1",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        45, 15, 25, 25,
+        controller->nav, (HMENU)IDC_SET_LEVEL_1, hInstance, nullptr);
+
+    CreateWindowEx(0, L"BUTTON", L"2",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        80, 15, 25, 25,
+        controller->nav, (HMENU)IDC_SET_LEVEL_2, hInstance, nullptr);*/
+
+    return TRUE;
+}
+BOOL SlideImageView::InitNavCtrls(HINSTANCE hInstance, HWND parent) {
     return TRUE;
 }
 
@@ -158,17 +185,11 @@ LRESULT CALLBACK SlideImageView::NavWndProc(HWND hWnd, UINT message, WPARAM wPar
     switch (message)
     {
     case WM_COMMAND:
-        return controller->ProcessCommand(hWnd, message, wParam, lParam);
+        return controller->ProcessNavCommands(hWnd, message, wParam, lParam);
         break;
 
-    case WM_LBUTTONUP:
-        return controller->ProcessLButtonUp(hWnd, message, wParam, lParam);
-        break;
-    case WM_RBUTTONUP:
-        return controller->ProcessRButtonUp(hWnd, message, wParam, lParam);
-        break;
-    case WM_MOUSEMOVE:
-        return controller->ProcessMouseMove(hWnd, message, wParam, lParam);
+    case WM_HSCROLL:
+        return controller->ProcessZoomChanged(hWnd, message, wParam, lParam);
         break;
         
     case WM_PAINT:
@@ -188,7 +209,7 @@ BOOL SlideImageView::PaintNav(HWND hWnd) {
     HDC hdc = BeginPaint(hWnd, &ps);
 
     if (model->getSlideImg() && model->getSlideImg()->segmentBitmap->GetLastStatus() == Ok) {
-        LPCSTR temp_msg = "something about zoom here";
+        LPCSTR temp_msg = "Zoom: ";// +(model->getSlideImg()->level + '0');
         RECT rect = { 0, 0, 350, 100 };
         DrawTextA(hdc, temp_msg, -1, &rect, DT_TOP);
     }

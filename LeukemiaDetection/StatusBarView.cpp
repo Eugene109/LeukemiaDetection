@@ -32,7 +32,7 @@ ATOM StatusBarView::RegisterClasses(HINSTANCE hInstance)
     wcex.hInstance = hInstance;
     wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LEUKEMIADETECTION));
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW-2);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW-1);
     wcex.lpszMenuName = 0;
     wcex.lpszClassName = L"Status Bar";
     wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));

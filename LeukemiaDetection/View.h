@@ -95,6 +95,9 @@ public:
 
     BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
     ATOM RegisterClasses(HINSTANCE hInstance);
+
+    static BOOL InitNavCtrls(HINSTANCE hInstance, HWND parent);
+
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     static BOOL Paint(HWND hWnd);
     static LRESULT CALLBACK NavWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
