@@ -24,7 +24,7 @@ public:
 		if (cellDetector)  delete cellDetector;
 
 		if (imgBuff)  delete[] imgBuff;
-		if (segmentBitmap)  delete segmentBitmap;
+		//if (segmentBitmap)  delete segmentBitmap;
 	}
 	bool inPolygon(int x, int y) {
 		return true;

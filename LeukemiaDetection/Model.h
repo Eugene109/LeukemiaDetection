@@ -15,7 +15,7 @@ protected:
 	Sahi* sahiModel;
 	
 	void InitSlideImg(LPWSTR filename) {
-		slideImg = new SlideImageModel(filename, 640,640,100,27);
+		slideImg = new SlideImageModel(filename, 640,640,50,17);
 	}
 	void SetImageSegment(int x, int y) {
 		if (slideImg)
@@ -42,8 +42,16 @@ protected:
 	void CompileCellDetector() {
 		cellDetector->CompileModel();
 	}
+
+public:
+	uint32_t* imgBuff;
+	Bitmap* segmentBitmap;
 	void RunCellDetector() {
-		//cellResults = cellDetector->Run(slideImg->segmentBitmap);
+		imgBuff = new uint32_t[640 * 640 ];
+		openslide_read_region(slideImg->slide, imgBuff, slideImg->xPos, slideImg->yPos, 0, slideImg->seg_w, slideImg->seg_h);
+		segmentBitmap = new Bitmap((int)slideImg->seg_w, (int)slideImg->seg_h, (int)slideImg->seg_w* 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
+
+		cellResults = cellDetector->Run(segmentBitmap);
 		//sahiModel->Run(slideImg->slide, 0);
 		sahiModel->TestIouCircle();
 	}

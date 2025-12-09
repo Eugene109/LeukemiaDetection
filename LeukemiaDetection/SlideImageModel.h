@@ -53,7 +53,7 @@ public:
 		openslide_close(slide);
 		if(imgBuff)
 			delete[] imgBuff;
-		if(segmentBitmap)
+		if (segmentBitmap)
 			delete segmentBitmap;
 	}
 
