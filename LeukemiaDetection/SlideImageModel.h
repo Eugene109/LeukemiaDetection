@@ -51,8 +51,10 @@ public:
 	}
 	~SlideImageModel() {
 		openslide_close(slide);
-		delete[] imgBuff;
-		delete segmentBitmap;
+		if(imgBuff)
+			delete[] imgBuff;
+		if(segmentBitmap)
+			delete segmentBitmap;
 	}
 
 	int xPos;
