@@ -68,13 +68,13 @@ public:
 	}
 	void TestIouCircle() {
 		yoloDetectionResult d1 = yoloDetectionResult{ 0,0,32,32, 0.5,1 };
-		yoloDetectionResult d2 = yoloDetectionResult{ 0,15,10,10, 0.5,1 };
+		yoloDetectionResult d2 = yoloDetectionResult{ 0,1,32,32, 0.5,1 };
 		float iou = iouCircle(d1, d2);
 		sprintf_s(debug, "iou:%f\n", iou);
 		OutputDebugStringA(debug);
 	}
 #include <chrono>
-	void TestIouCirlceSpeed() {
+	void TestIouCircleSpeed() {
 		yoloDetectionResult d1 = yoloDetectionResult{ 0,0,32,32, 0.5,1 };
 		yoloDetectionResult d2 = yoloDetectionResult{ 0,15,10,10, 0.5,1 };
 		auto start = std::chrono::high_resolution_clock::now();
@@ -107,13 +107,17 @@ public:
 
 	const float PI = 3.1415926535;
 	float iouCircle(yoloDetectionResult d1, yoloDetectionResult d2) {
-		int r1 = (d1.w + d1.h) / 4;
+		int r1 = (d1.w + d1.h) / 4; // estimated radius of d1 - average of the half-width and half-height
 		int r2 = (d2.w + d2.h) / 4;
-		float b = dist(d1, d2);
-		if (r1 + r2 < b) return 0;
+		float b = dist(d1, d2); // distance from d1 to d2
+		if (b > r1 + r2) return 0; // two circles do not touch; 0
+		
+		if (r2 - r1 >= b) // d1 is enclosed by d2
+			return (float)r1 * r1 / r2 * r2;
+		if (r1 - r2 >= b) // d2 is enclosed by d1
+			return (float)r2 * r2 / r1 * r1;
 
-		if (b < r1 + r2 && r1 < r2 + b && r2 < r1 + b) {
-
+		if (b < r1 + r2 && r1 < r2 + b && r2 < r1 + b) { // fun little algorithm ( check my math here: https://www.desmos.com/calculator/0iocsnbbjs )
 			//OutputDebugStringA("now running circle intersection\n");
 
 			float C = acos((r1 * r1 + b * b - r2 * r2) / (2 * r1 * b));
@@ -123,16 +127,16 @@ public:
 			float arcArea1 = r1 * r1 * C;
 			float arcArea2 = r2 * r2 * A;
 
-			float tri1 = (r1 * r1 / 4) * sin(2 * C);
+			float tri1 = (r1 * r1 / 4) * sin(2 * C); // sometimes there's negative area here it works perfectly don't think too hard
 			float tri2 = (r2 * r2 / 4) * sin(2 * A);
-			float intersectArea = (arcArea1 + arcArea2) - (tri1*2 + tri2*2);
-			float unionArea = (3.1415926535 * (r1 * r1 + r2 * r2)) - intersectArea;
+			float intersectArea = (arcArea1 + arcArea2) - (tri1 + tri2) * 2;
+			float unionArea = (3.1415926535 * (r1 * r1 + r2 * r2)) - intersectArea; // intersect area is double-counted by summing circle areas
 
 			//sprintf_s(debug, "I:%f, U:%f\n", intersectArea, unionArea);
 			//OutputDebugStringA(debug);
 			return intersectArea / unionArea;
 		}
-		return iouAABB(d1, d2);
+		return iouAABB(d1, d2); // 'default' case to handle wacky edge cases I didn't think of
 	}
 	int max(int a, int b) {
 		if (a > b)
@@ -144,7 +148,7 @@ public:
 			return a;
 		return b;
 	}
-	float iouAABB(yoloDetectionResult d1, yoloDetectionResult d2) {
+	float iouAABB(yoloDetectionResult d1, yoloDetectionResult d2) { // simple min/max find intersection of Axis-Aligned Bounding Boxes (AABB)
 		int minX1 = d1.x - d1.w / 2;
 		int minY1 = d1.y - d1.h / 2;
 		int maxX1 = d1.x + d1.w / 2;

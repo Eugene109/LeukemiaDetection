@@ -6,7 +6,7 @@
 
 
 struct yoloDetectionResultOld {
-    RectF box;
+    RectF box;// x,y are top left
     float confidence;
     int classId;
 };

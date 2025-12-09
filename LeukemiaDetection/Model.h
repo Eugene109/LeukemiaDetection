@@ -45,7 +45,7 @@ protected:
 	void RunCellDetector() {
 		//cellResults = cellDetector->Run(slideImg->segmentBitmap);
 		//sahiModel->Run(slideImg->slide, 0);
-		sahiModel->TestIouCirlceSpeed();
+		sahiModel->TestIouCircle();
 	}
 public:
 	friend class Controller;
