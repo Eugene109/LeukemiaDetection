@@ -38,7 +38,7 @@ public:
         catalog.EnsureAndRegisterCertifiedAsync().get();*/
         // Set the auto EP selection policy
         sessionOptions = new Ort::SessionOptions();
-        sessionOptions->SetEpSelectionPolicy(OrtExecutionProviderDevicePolicy_MIN_OVERALL_POWER);
+        sessionOptions->SetEpSelectionPolicy(OrtExecutionProviderDevicePolicy_MAX_PERFORMANCE);
         // <-\ 
         compiledModelPath = modelPath + L".compiled";
         model_compiled = std::filesystem::exists(compiledModelPath);
@@ -70,25 +70,29 @@ public:
         return model_compiled = status == nullptr;
     }
 
-
-    // maybe we should make the input and output just Ort::Value tensor datatypes?
-    Ort::Value RunInference(Ort::Value inputTensor) {
+    void CloseSession(){}
+    void StartSession(){
         Ort::Session session(*env, compiledModelPath.c_str(), *sessionOptions);
         OutputDebugStringW(L"Ort Session Started...\n");
-
-        OutputDebugStringW(L"Running inference...\n");
            
         // Get input/output names
         Ort::AllocatorWithDefaultOptions allocator;
         Ort::AllocatedStringPtr inputName = session.GetInputNameAllocated(0, allocator);
         Ort::AllocatedStringPtr outputName = session.GetOutputNameAllocated(0, allocator);
-        std::vector<const char*> inputNames = { inputName.get() };
-        std::vector<const char*> outputNames = { outputName.get() };
+        inputNames = { inputName.get() };
+        outputNames = { outputName.get() };
+    }
+    std::vector<const char*> inputNames;
+    std::vector<const char*> outputNames;
+
+
+    // maybe we should make the input and output just Ort::Value tensor datatypes?
+    Ort::Value RunInference(Ort::Value inputTensor) {
+        OutputDebugStringW(L"Running inference...\n");
 
         // Run inference
         std::vector<Ort::Value> outputTensors =
             session.Run(Ort::RunOptions{ nullptr }, inputNames.data(), &inputTensor, 1, outputNames.data(), 1);
-
 
         // cleanup
         inputName.release();

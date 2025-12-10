@@ -14,8 +14,9 @@ public:
     void setInputTensorSize(int w, int h) { inputTensorW = w; inputTensorH = h; }
 
 
-    std::vector<float> RunModel(Bitmap* inputFrame) {
+    Ort::Value RunModel(Bitmap* inputFrame) {
         // Load and Preprocess image as input tensor
+
         Bitmap* preprocessedImage = preprocessImage(inputFrame);
         Ort::Value inputTensor = toOrtValue(preprocessedImage);
         delete preprocessedImage;
@@ -42,22 +43,22 @@ public:
 
 
         // Extract results
-        std::vector<float> results;
-        /*if (inputType != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16)
-        {*/
-        float* outputData = outputTensor.GetTensorMutableData<float>();
-        size_t outputSize = outputTensor.GetTensorTypeAndShapeInfo().GetElementCount();
-        results.assign(outputData, outputData + outputSize);
-        /*}
-        else
-        {
-            auto outputData = outputTensors[0].GetTensorMutableData<uint16_t>();
-            size_t outputSize = outputTensors[0].GetTensorTypeAndShapeInfo().GetElementCount();
-            std::vector<uint16_t> outputFloat16(outputData, outputData + outputSize);
-            results = ResnetModelHelper::ConvertFloat16ToFloat32(outputFloat16);
-        }*/
+        // std::vector<float> results;
+        // /*if (inputType != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16)
+        // {*/
+        // float* outputData = outputTensor.GetTensorMutableData<float>();
+        // size_t outputSize = outputTensor.GetTensorTypeAndShapeInfo().GetElementCount();
+        // results.assign(outputData, outputData + outputSize);
+        // /*}
+        // else
+        // {
+        //     auto outputData = outputTensors[0].GetTensorMutableData<uint16_t>();
+        //     size_t outputSize = outputTensors[0].GetTensorTypeAndShapeInfo().GetElementCount();
+        //     std::vector<uint16_t> outputFloat16(outputData, outputData + outputSize);
+        //     results = ResnetModelHelper::ConvertFloat16ToFloat32(outputFloat16);
+        // }*/
 
-        return results;
+        return std::move(outputTensor);
     }
     
 public:
