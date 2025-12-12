@@ -32,9 +32,9 @@ public:
 
 
 	char debug[100] = { 0 };
-	void printVector(std::vector<yoloDetectionResultOld> arr) {
-		for (const yoloDetectionResultOld& r : arr) {
-			sprintf_s(debug, "%d,%d %dx%d  class %d\n",(int)r.box.X, (int)r.box.Y, (int)r.box.Width, (int)r.box.Height, r.classId);
+	void printVector(std::vector<yoloDetectionResult> arr) {
+		for (const yoloDetectionResult& r : arr) {
+			sprintf_s(debug, "%d,%d %dx%d  class %d\n",(int)r.x, (int)r.y, (int)r.w, (int)r.h, r.classId);
 			OutputDebugStringA(debug);
 		}
 	}
@@ -45,7 +45,7 @@ public:
 		int startX = 100;
 		int startY = 27;
 		
-		std::vector<yoloDetectionResultOld> globalDetections;
+		std::vector<yoloDetectionResult> globalDetections;
 		
 		for (int x = 0; x < 3; x++) {
 			for (int y = 0; y < 3; y++) {
@@ -57,7 +57,7 @@ public:
 					openslide_read_region(slide, imgBuff, offsetX, offsetY, lvl, seg_w, seg_h);
 					delete segmentBitmap;
 					segmentBitmap = new Bitmap((int)seg_w, (int)seg_h, (int)seg_w * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
-					auto sliceDetections = cellDetector->Run(segmentBitmap, offsetX, offsetY);
+					auto sliceDetections = cellDetector->Run(imgBuff, offsetX, offsetY);
 					printVector(sliceDetections);
 					globalDetections.insert(globalDetections.end(), sliceDetections.begin(), sliceDetections.end());
 				}
@@ -66,6 +66,16 @@ public:
 		OutputDebugStringW(L"\nGLOBAL:\n");
 		printVector(globalDetections);
 	}
+
+	void cleanBorders(std::vector<yoloDetectionResult> &detections) {
+		for (int i = detections.size()-1; i >= 0; i--) {
+			if (!withinBorders(detections[i])) {
+				detections.erase(detections.begin() + i);
+			}
+		}
+	}
+
+
 	void TestIouCircle() {
 		yoloDetectionResult d1 = yoloDetectionResult{ 0,0,32,32, 0.5,1 };
 		yoloDetectionResult d2 = yoloDetectionResult{ 0,1,32,32, 0.5,1 };
@@ -88,15 +98,24 @@ public:
 		OutputDebugStringA(debug);
 	}
 
+	const int BORDER_THRESH = 10;
+	inline bool withinBorders(yoloDetectionResult det) {
+		int left = det.x - det.w / 2;
+		int right = det.x + det.w / 2;
+		int top = det.y - det.h / 2;
+		int bottom = det.y + det.h / 2;
+		return left >= BORDER_THRESH && right < (seg_w - BORDER_THRESH) && top >= BORDER_THRESH && bottom < (seg_h - BORDER_THRESH);
+	}
 
-	//       .
-	//      / \
-	//     / B  \   
-	//  a /       \ c
-	//   /          \
-	//  / C        A  \
-	// -----------------
-	//         b  
+
+	//             .
+	//            / \
+	//           / B  \   
+	//        a /       \ c
+	//         /          \
+	//        / C        A  \
+	//  (d1) ^---------------^ (d2)
+	//               b
 
 	//Area = hypotenuse*hypotenuse/4 *sin(2 theta)
 

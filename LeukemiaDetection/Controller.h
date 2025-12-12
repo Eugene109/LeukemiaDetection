@@ -63,6 +63,9 @@ public:
             model->CompileCellDetector();
             InvalidateRect(hWnd, 0, TRUE); // move this
             break;
+        case ID_TOOLS_STARTSESSION:
+            model->StartOrtSession();
+            break;
         case ID_TOOLS_RUNMODEL:
             model->RunCellDetector();
             InvalidateRect(hWnd, 0, TRUE); // move this

@@ -86,8 +86,14 @@ public:
                 Pen* pen = new Pen(Color(255, 0, 0));
                 //det.box.X += 50;
                 //det.box.Y += 50;
-                graphics.DrawRectangle(pen, det.box);
-                RECT rect = { det.box.X , det.box.Y, det.box.X + det.box.Width, det.box.Y + det.box.Height };
+                RectF box = RectF{
+                    det.x - det.w / 2.0f,
+                    det.y - det.h / 2.0f,
+                    (REAL)det.w,
+                    (REAL)det.h
+                };
+                graphics.DrawRectangle(pen, box);
+                RECT rect = { det.x - det.w/2 , det.y-det.h/2, det.x + det.w / 2, det.y + det.h / 2 };
                 std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
                 DrawTextA(hdc, title.c_str(), -1, &rect, DT_TOP);
             }

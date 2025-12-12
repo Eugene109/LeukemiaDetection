@@ -9,12 +9,12 @@ public:
 
     int Run(Bitmap* inputFrame) {
         auto start = std::chrono::steady_clock::now();
-        std::vector<float> results = RunModel(inputFrame);
+        Ort::Value results = RunModel(inputFrame);
         auto end = std::chrono::steady_clock::now();
 
         // Load labels and print result
         //OutputDebugStringW(L"Output from inference:\n");
-        int classId = parseCnnOutput(results);
+        int classId = parseCnnOutput(std::move(results));
         //auto labels = LoadLabels();
         //TODO: load labels and parse data
 
@@ -32,13 +32,7 @@ public:
         return classId;
     }
 
-    int parseCnnOutput(std::vector<float> tensor) {
-        int max = 0;
-        for (int i = 1; i < tensor.size(); i++) {
-            if (tensor[i] > tensor[max]) {
-                max = i;
-            }
-        }
-        return max;
+    int parseCnnOutput(Ort::Value tensor) {
+        return 67;
     }
 };

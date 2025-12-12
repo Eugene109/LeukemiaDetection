@@ -13,55 +13,99 @@ public:
 
     void setInputTensorSize(int w, int h) { inputTensorW = w; inputTensorH = h; }
 
+    Ort::Value RunModel(uint32_t* inputFrame) {
+        // Load and Preprocess image as input tensor
+
+        auto start = std::chrono::steady_clock::now();
+        Ort::Value inputTensor;
+
+        Ort::TypeInfo input_type_info = session->GetInputTypeInfo(0);
+        Ort::ConstTensorTypeAndShapeInfo tensor_info = input_type_info.GetTensorTypeAndShapeInfo();
+        ONNXTensorElementDataType type = tensor_info.GetElementType();
+        if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
+            inputTensor = toOrtValue(inputFrame);
+        }
+        else if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_INT16) {
+            inputTensor = toOrtValueQuantizedI16(inputFrame);
+        }
+        else {
+            return inputTensor;
+        }
+        auto endSize = std::chrono::steady_clock::now();
+
+        Ort::Value outputTensor = RunInference(std::move(inputTensor));
+
+        auto end = std::chrono::steady_clock::now();
+        auto elapsedSize = std::chrono::duration_cast<std::chrono::milliseconds>(endSize - start);
+        auto elapsedRun = std::chrono::duration_cast<std::chrono::milliseconds>(end - endSize);
+        wchar_t buffer[256];
+        wsprintf(buffer, L"Time to convert Bitmap: %dms\nTime to execute YOLOv11 Model: %dms\n", (int)elapsedSize.count(), (int)elapsedRun.count());
+        OutputDebugStringW(buffer);
+        return std::move(outputTensor);
+    }
 
     Ort::Value RunModel(Bitmap* inputFrame) {
         // Load and Preprocess image as input tensor
 
-        Bitmap* preprocessedImage = preprocessImage(inputFrame);
-        Ort::Value inputTensor = toOrtValue(preprocessedImage);
-        delete preprocessedImage;
+        auto start = std::chrono::steady_clock::now();
+        Ort::Value inputTensor;
+		if (inputFrame->GetWidth() == inputTensorW && inputFrame->GetHeight() == inputTensorH) {
+            inputTensor = toOrtValue(inputFrame);
+        }
+        else {
+            Bitmap* preprocessedImage = preprocessImage(inputFrame);
+            inputTensor = toOrtValue(preprocessedImage);
+            delete preprocessedImage;
+        }
+
+        auto endSize = std::chrono::steady_clock::now();
 
 		Ort::Value outputTensor = RunInference(std::move(inputTensor));
 
+        auto end = std::chrono::steady_clock::now();
+        auto elapsedSize = std::chrono::duration_cast<std::chrono::milliseconds>(endSize - start);
+        auto elapsedRun = std::chrono::duration_cast<std::chrono::milliseconds>(end - endSize);
+        wchar_t buffer[256];
+        wsprintf(buffer, L"Time to convert Bitmap: %dms\nTime to execute YOLOv11 Model: %dms\n", (int)elapsedSize.count(), (int)elapsedRun.count());
+        OutputDebugStringW(buffer);
 
         //assert(outputTensor.IsTensor());
-        if (outputTensor.IsTensor())
-        {
-            auto outputInfo = outputTensor.GetTensorTypeAndShapeInfo();
-            wchar_t debugBuffer[256];
-            swprintf(debugBuffer, 256, L"GetElementType: %d\n", outputInfo.GetElementType());
-            OutputDebugStringW(debugBuffer);
-            swprintf(debugBuffer, 256, L"Dimensions of the output: %zu\n", outputInfo.GetShape().size());
-            OutputDebugStringW(debugBuffer);
-            OutputDebugStringW(L"Shape of the output: ");
-            for (unsigned int shapeI = 0; shapeI < outputInfo.GetShape().size(); shapeI++) {
-                swprintf(debugBuffer, 256, L"%lld, ", outputInfo.GetShape()[shapeI]);
-                OutputDebugStringW(debugBuffer);
-            }
-            OutputDebugStringW(L"\n");
-        }
-
-
-        // Extract results
-        // std::vector<float> results;
-        // /*if (inputType != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16)
-        // {*/
-        // float* outputData = outputTensor.GetTensorMutableData<float>();
-        // size_t outputSize = outputTensor.GetTensorTypeAndShapeInfo().GetElementCount();
-        // results.assign(outputData, outputData + outputSize);
-        // /*}
-        // else
-        // {
-        //     auto outputData = outputTensors[0].GetTensorMutableData<uint16_t>();
-        //     size_t outputSize = outputTensors[0].GetTensorTypeAndShapeInfo().GetElementCount();
-        //     std::vector<uint16_t> outputFloat16(outputData, outputData + outputSize);
-        //     results = ResnetModelHelper::ConvertFloat16ToFloat32(outputFloat16);
-        // }*/
+        //if (outputTensor.IsTensor())
+        //{
+        //    auto outputInfo = outputTensor.GetTensorTypeAndShapeInfo();
+        //    wchar_t debugBuffer[256];
+        //    swprintf(debugBuffer, 256, L"GetElementType: %d\n", outputInfo.GetElementType());
+        //    OutputDebugStringW(debugBuffer);
+        //    swprintf(debugBuffer, 256, L"Dimensions of the output: %zu\n", outputInfo.GetShape().size());
+        //    OutputDebugStringW(debugBuffer);
+        //    OutputDebugStringW(L"Shape of the output: ");
+        //    for (unsigned int shapeI = 0; shapeI < outputInfo.GetShape().size(); shapeI++) {
+        //        swprintf(debugBuffer, 256, L"%lld, ", outputInfo.GetShape()[shapeI]);
+        //        OutputDebugStringW(debugBuffer);
+        //    }
+        //    OutputDebugStringW(L"\n");
+        //}
 
         return std::move(outputTensor);
     }
     
 public:
+    Ort::Value toOrtValue(uint32_t* src) {  // Ort::Value is a tensor
+        // Convert Bitmap to Ort::Value tensor
+        float* pixeldata = new float[3 * inputTensorH * inputTensorW]; // ARGB
+        for (int x = 0; x < inputTensorW; x++) {
+            for (int y = 0; y < inputTensorH; y++) {
+                uint32_t color = src[y * inputTensorW + x];
+                pixeldata[0 * inputTensorW * inputTensorH + y * inputTensorW + x] = ((color & 0x00FF0000) >> 16)/256.0; // R
+                pixeldata[1 * inputTensorW * inputTensorH + y * inputTensorW + x] = ((color & 0x0000FF00) >> 8) / 256.0; // G
+                pixeldata[2 * inputTensorW * inputTensorH + y * inputTensorW + x] = ((color & 0x000000FF) >> 0) / 256.0; // B
+            }
+        }
+
+        std::array<int64_t, 4> shape{ 1, 3, inputTensorW, inputTensorH };
+        Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+        return Ort::Value::CreateTensor<float>(memoryInfo, pixeldata, 3 * inputTensorW * inputTensorH, shape.data(), shape.size());
+    }
     Ort::Value toOrtValue(Bitmap* src) {  // Ort::Value is a tensor
         // Convert Bitmap to Ort::Value tensor
         float* pixeldata = new float[3 * src->GetWidth() * src->GetHeight()];
@@ -95,5 +139,38 @@ public:
             scalarGfx.DrawImage(src, (inputTensorH - scaledWidth) / 2, 0, scaledWidth, inputTensorH);
         }
         return scaledBitmap;
+    }
+
+    Ort::Value toOrtValueQuantizedI8(uint32_t* src) {  // Ort::Value is a tensor
+        // Convert Bitmap to Ort::Value tensor
+        byte* pixeldata = new byte[3 * inputTensorH * inputTensorW]; // ARGB
+        for (int x = 0; x < inputTensorW; x++) {
+            for (int y = 0; y < inputTensorH; y++) {
+                uint32_t color = src[y * inputTensorW + x];
+                pixeldata[0 * inputTensorW * inputTensorH + y * inputTensorW + x] = (color & 0x00FF0000) >> 16; // R
+                pixeldata[1 * inputTensorW * inputTensorH + y * inputTensorW + x] = (color & 0x0000FF00) >> 8; // G
+                pixeldata[2 * inputTensorW * inputTensorH + y * inputTensorW + x] = (color & 0x000000FF) >> 0; // B
+            }
+        }
+
+        std::array<int64_t, 4> shape{ 1, 3, inputTensorW, inputTensorH };
+        Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+        return Ort::Value::CreateTensor<byte>(memoryInfo, pixeldata, 3 * inputTensorW * inputTensorH, shape.data(), shape.size());
+    }
+    Ort::Value toOrtValueQuantizedI16(uint32_t* src) {  // Ort::Value is a tensor
+        // Convert Bitmap to Ort::Value tensor
+        short* pixeldata = new short[3 * inputTensorH * inputTensorW]; // ARGB
+        for (int x = 0; x < inputTensorW; x++) {
+            for (int y = 0; y < inputTensorH; y++) {
+                uint32_t color = src[y * inputTensorW + x];
+                pixeldata[0 * inputTensorW * inputTensorH + y * inputTensorW + x] = (color & 0x00FF0000) >> 9; // R
+                pixeldata[1 * inputTensorW * inputTensorH + y * inputTensorW + x] = (color & 0x0000FF00) >> 1; // G
+                pixeldata[2 * inputTensorW * inputTensorH + y * inputTensorW + x] = (color & 0x000000FF) << 7; // B
+            }
+        }
+
+        std::array<int64_t, 4> shape{ 1, 3, inputTensorW, inputTensorH };
+        Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+        return Ort::Value::CreateTensor<short>(memoryInfo, pixeldata, 3 * inputTensorW * inputTensorH, shape.data(), shape.size());
     }
 };

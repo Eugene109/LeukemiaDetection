@@ -11,11 +11,11 @@ class Model {
 protected:
 	SlideImageModel* slideImg;
 	YoloModel* cellDetector;
-	std::vector<yoloDetectionResultOld> cellResults;
+	std::vector<yoloDetectionResult> cellResults;
 	Sahi* sahiModel;
 	
 	void InitSlideImg(LPWSTR filename) {
-		slideImg = new SlideImageModel(filename, 640,640,50,17);
+		slideImg = new SlideImageModel(filename, 640,640,52,18);
 	}
 	void SetImageSegment(int x, int y) {
 		if (slideImg)
@@ -38,29 +38,34 @@ protected:
 		OutputDebugStringW(filename);
 		cellDetector = new YoloModel(filename);
 		sahiModel = new Sahi(filename);
+		//sahiModel->cellDetector->StartSession();
 	}
 	void CompileCellDetector() {
 		cellDetector->CompileModel();
+	}
+	void StartOrtSession(){
+		cellDetector->StartSession();
 	}
 
 public:
 	uint32_t* imgBuff;
 	Bitmap* segmentBitmap;
 	void RunCellDetector() {
-		imgBuff = new uint32_t[640 * 640 ];
+		imgBuff = new uint32_t[640 * 640];
 		openslide_read_region(slideImg->slide, imgBuff, slideImg->xPos, slideImg->yPos, 0, slideImg->seg_w, slideImg->seg_h);
 		segmentBitmap = new Bitmap((int)slideImg->seg_w, (int)slideImg->seg_h, (int)slideImg->seg_w* 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
 
-		cellResults = cellDetector->Run(segmentBitmap);
+		cellResults = cellDetector->Run(imgBuff);
+		sahiModel->cleanBorders(cellResults);
 		//sahiModel->Run(slideImg->slide, 0);
-		sahiModel->TestIouCircle();
+		//sahiModel->TestIouCircle();
 	}
 public:
 	friend class Controller;
 	Model() {
 		cellDetector = nullptr;
 		slideImg = nullptr;
-		cellResults = std::vector<yoloDetectionResultOld>();
+		cellResults = std::vector<yoloDetectionResult>();
 	}
 	~Model() {
 		if (cellDetector) {
@@ -82,7 +87,7 @@ public:
 	SlideImageModel* getSlideImg() {
 		return slideImg;
 	}
-	std::vector<yoloDetectionResultOld> getCellResults() {
+	std::vector<yoloDetectionResult> getCellResults() {
 		return cellResults;
 	}
 };

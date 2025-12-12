@@ -25,14 +25,14 @@ class YoloModel : public VisionModel {
 public:
     YoloModel(std::wstring modelPath) : VisionModel(modelPath, 640, 640) {}
 
-    std::vector<yoloDetectionResultOld> Run(Bitmap* inputFrame, int offsetX = 0, int offsetY = 0) {
+    std::vector<yoloDetectionResult> Run(uint32_t* inputFrame, int offsetX = 0, int offsetY = 0) {
         auto start = std::chrono::steady_clock::now();
-        std::vector<float> results = RunModel(inputFrame);
+        Ort::Value output = RunModel(inputFrame);
         auto end = std::chrono::steady_clock::now();
 
         // Load labels and print result
         //OutputDebugStringW(L"Output from inference:\n");
-        std::vector<yoloDetectionResultOld> detectionResults = parseYoloOutput(results, inputFrame->GetWidth(), inputFrame->GetHeight(), offsetX, offsetY);
+        std::vector<yoloDetectionResult> detectionResults = parseYoloOutput(std::move(output), offsetX, offsetY);
         //auto labels = LoadLabels();
         //TODO: load labels and parse data
         
@@ -49,50 +49,55 @@ public:
         OutputDebugStringW(buffer);
         return detectionResults;
     }
-    
-    //int num_detections = 756;
-    int num_detections = 8400;
-    std::vector<yoloDetectionResultOld> parseYoloOutput(const std::vector<float> &results, int origW, int origH, int offsetX = 0, int offsetY = 0) {
-        int num_classes = results.size() / num_detections - 4;
-        std::vector<yoloDetectionResultOld> output;
-        for (int p = 0; p < num_detections; p++) {
-            float bestScore = 0.f;
-            int bestClass = -1;
-            for (int c = 0; c < num_classes; c++) {
-                float score = results[p + (c + 4) * num_detections];
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestClass = c;
+    std::vector<yoloDetectionResult> parseYoloOutput(Ort::Value output, int offsetX = 0, int offsetY = 0) {
+        auto outputInfo = output.GetTensorTypeAndShapeInfo();
+        if (outputInfo.GetElementType() == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
+            int num_detections = outputInfo.GetShape()[2];
+            int num_classes = outputInfo.GetShape()[1] - 4;
+            std::vector<yoloDetectionResult> detections;
+
+            float* outputData = output.GetTensorMutableData<float>();
+            for (int p = 0; p < num_detections; p++) {
+                float bestScore = 0.f;
+                int bestClass = -1;
+                for (int c = 0; c < num_classes; c++) {
+                    float score = outputData[p + (c + 4) * num_detections]; // Should probably use output.At()
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestClass = c;
+                    }
+                }
+                if (bestScore > 0.67) {
+                    float x = (outputData[p + 0 * num_detections]) + offsetX;
+                    float y = (outputData[p + 1 * num_detections]) + offsetY;
+                    float w = (outputData[p + 2 * num_detections]);
+                    float h = (outputData[p + 3 * num_detections]);
+                    yoloDetectionResult det;
+                    det.x = x;
+                    det.y = y;
+                    det.w = w;
+                    det.h = h;
+                    det.confidence = bestScore;
+                    det.classId = bestClass;
+                    detections.push_back(det);
+
+                    //debug print
+                    wchar_t buffer[64];/*
+                    swprintf(buffer, 64, L"%d: [", p);
+                    OutputDebugStringW(buffer);
+                    for (int i = 0; i < 4 + num_classes; i++) {
+                        float value = outputData[p + i * num_detections];
+                        wchar_t buffer[64];
+                        swprintf(buffer, 64, L"%f, ", value);
+                        OutputDebugStringW(buffer);
+                    }
+                    OutputDebugStringW(L"]\n");*/
                 }
             }
-            if (bestScore > 0.67) {
-                float x1 = (results[p + 0 * num_detections] - results[p + 2 * num_detections] / 2) +offsetX;
-                float y1 = (results[p + 1 * num_detections] - results[p + 3 * num_detections] / 2) +offsetY;
-                float w = (results[p + 2 * num_detections]);
-                float h = (results[p + 3 * num_detections]);
-                yoloDetectionResultOld det;
-                det.box = RectF(x1, y1, w, h);
-                det.confidence = bestScore;
-                det.classId = bestClass;
-                output.push_back(det);
-
-                //debug print
-                //wchar_t buffer[64];
-                //swprintf(buffer, 64, L"%d: [", p);
-                //OutputDebugStringW(buffer);
-                //for (int i = 0; i < 4 + num_classes; i++) {
-                    //float value = results[p + i * num_detections];
-                    //wchar_t buffer[64];
-                    //swprintf(buffer, 64, L"%f, ", value);
-                    //OutputDebugStringW(buffer);
-                //}
-                //OutputDebugStringW(L"]\n");
-            }
+            wchar_t buffer[64];
+            swprintf(buffer, 64, L"\nNumDetections:%d\n, ", detections.size());
+            OutputDebugStringW(buffer);
+            return detections;
         }
-        wchar_t buffer[64];
-        swprintf(buffer, 64, L"\nNumDetections:%d\n, ", output.size());
-        OutputDebugStringW(buffer);
-        return output;
     }
-
 };
