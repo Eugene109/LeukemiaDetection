@@ -57,6 +57,14 @@ public:
 
 		cellResults = cellDetector->Run(imgBuff);
 		sahiModel->cleanBorders(cellResults);
+
+		auto start = std::chrono::steady_clock::now();
+		sahiModel->NMS(cellResults);
+		auto end = std::chrono::steady_clock::now();
+		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+		sprintf_s(sahiModel->debug, "Detections after NMS: %d, %dms\n", (int)cellResults.size(), (int)elapsed.count());
+		OutputDebugStringA(sahiModel->debug);
 		//sahiModel->Run(slideImg->slide, 0);
 		//sahiModel->TestIouCircle();
 	}

@@ -39,6 +39,8 @@ public:
 		}
 	}
 
+
+
 	uint32_t* imgBuff = nullptr;
 	Bitmap* segmentBitmap = nullptr;
 	void Run(openslide_t* slide, int lvl = 0) {
@@ -71,6 +73,20 @@ public:
 		for (int i = detections.size()-1; i >= 0; i--) {
 			if (!withinBorders(detections[i])) {
 				detections.erase(detections.begin() + i);
+			}
+		}
+	}
+	void NMS(std::vector<yoloDetectionResult>& detections) {
+		std::sort(detections.begin(), detections.end(), [](yoloDetectionResult a, yoloDetectionResult b) {
+			return a.confidence > b.confidence;
+			});// sort descending
+		for (int i = 0; i < detections.size(); i++) {
+			for (int j = i + 1; j < detections.size(); j++) {
+				float iou = iouCircle(detections[i], detections[j]);
+				if (iou > 0.9) {
+					detections.erase(detections.begin() + j);
+					j--;
+				}
 			}
 		}
 	}
