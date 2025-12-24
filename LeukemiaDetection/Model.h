@@ -41,32 +41,34 @@ protected:
 		//sahiModel->cellDetector->StartSession();
 	}
 	void CompileCellDetector() {
-		cellDetector->CompileModel();
+		sahiModel->cellDetector->CompileModel();
 	}
 	void StartOrtSession(){
-		cellDetector->StartSession();
+		sahiModel->cellDetector->StartSession();
 	}
 
 public:
 	uint32_t* imgBuff;
 	Bitmap* segmentBitmap;
 	void RunCellDetector() {
+		cellDetector->StartSession();
 		imgBuff = new uint32_t[640 * 640];
 		openslide_read_region(slideImg->slide, imgBuff, slideImg->xPos, slideImg->yPos, 0, slideImg->seg_w, slideImg->seg_h);
 		segmentBitmap = new Bitmap((int)slideImg->seg_w, (int)slideImg->seg_h, (int)slideImg->seg_w* 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
-
 		cellResults = cellDetector->Run(imgBuff);
 		sahiModel->cleanBorders(cellResults);
+		sahiModel->NMS(cellResults);
 
-		auto start = std::chrono::steady_clock::now();
+		/*auto start = std::chrono::steady_clock::now();
 		sahiModel->NMS(cellResults);
 		auto end = std::chrono::steady_clock::now();
-		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);*/
+		//sprintf_s(sahiModel->debug, "Detections after NMS: %d, %dms\n", (int)cellResults.size(), (int)elapsed.count());
+		//OutputDebugStringA(sahiModel->debug);
 
-		sprintf_s(sahiModel->debug, "Detections after NMS: %d, %dms\n", (int)cellResults.size(), (int)elapsed.count());
-		OutputDebugStringA(sahiModel->debug);
-		//sahiModel->Run(slideImg->slide, 0);
 		//sahiModel->TestIouCircle();
+
+		//sahiModel->Run(slideImg->slide, 0);
 	}
 public:
 	friend class Controller;

@@ -40,7 +40,10 @@ public:
         // Set the auto EP selection policy
         sessionOptions = new Ort::SessionOptions();
         sessionOptions->SetEpSelectionPolicy(OrtExecutionProviderDevicePolicy_MAX_PERFORMANCE);
-        // <-\ 
+		sessionOptions->EnableProfiling(L"C:\\Users\\920257\\onnx_profile.json");
+		sessionOptions->SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+        sessionOptions->EnableCpuMemArena();
+        // Save compiled model to [modelpath].compiled
         compiledModelPath = modelPath + L".compiled";
         model_compiled = std::filesystem::exists(compiledModelPath);
 	}
@@ -68,6 +71,9 @@ public:
     }
 
     void CloseSession() {
+		OutputDebugStringW(L"Closing Ort Session...\n");
+        Ort::AllocatorWithDefaultOptions allocator;
+        session->EndProfilingAllocated(allocator);
         session->release();
     }
     Ort::Session* session;

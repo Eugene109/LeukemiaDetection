@@ -3,6 +3,7 @@
 #include "VisionModel.h"
 
 #include <chrono>
+#include <set>
 
 
 struct yoloDetectionResultOld {
@@ -18,6 +19,12 @@ struct yoloDetectionResult {
     int h;
     float confidence;
     int classId;
+    bool operator>(const yoloDetectionResult& other) const {
+        return confidence < other.confidence;
+	}
+    bool operator<(const yoloDetectionResult& other) const {
+        return confidence > other.confidence;
+    }
 };
 
 
@@ -67,7 +74,7 @@ public:
                         bestClass = c;
                     }
                 }
-                if (bestScore > 0.67) {
+                if (bestScore > 0.5) {
                     float x = (outputData[p + 0 * num_detections]) + offsetX;
                     float y = (outputData[p + 1 * num_detections]) + offsetY;
                     float w = (outputData[p + 2 * num_detections]);
