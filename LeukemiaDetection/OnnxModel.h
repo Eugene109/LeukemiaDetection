@@ -20,7 +20,7 @@ using namespace Windows::Foundation;
 using namespace Windows::Storage;
 
 class OnnxModel {
-    Ort::Env* env;
+    inline static Ort::Env* env = nullptr;
     BOOL model_compiled;
     std::wstring modelPath;
     std::wstring compiledModelPath;
@@ -29,10 +29,11 @@ public:
     OnnxModel(std::wstring modelPath) : modelPath(modelPath) {
         // https://learn.microsoft.com/en-us/windows/ai/new-windows-ml/tutorial?source=recommendations&tabs=cpp
         // ->
-        winrt::init_apartment();
-        // Initialize ONNX Runtime
-        if(!env)
+        if (!env) {
+            winrt::init_apartment();
+            // Initialize ONNX Runtime
             env = new Ort::Env(ORT_LOGGING_LEVEL_VERBOSE, "CppConsoleDesktop");
+        }
 
         // Use Windows ML to download and register Execution Providers
         /*auto catalog = Windows::AI::MachineLearning::ExecutionProviderCatalog::GetDefault();
