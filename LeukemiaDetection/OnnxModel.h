@@ -4,6 +4,8 @@
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
 
+#include "pathcch.h"
+
 #include <onnxruntime_cxx_api.h>
 
 #include <windows.h>
@@ -22,11 +24,14 @@ using namespace Windows::Storage;
 class OnnxModel {
     Ort::Env* env;
     BOOL model_compiled;
-    std::wstring modelPath;
-    std::wstring compiledModelPath;
+    std::filesystem::path exeDir;
+    std::filesystem::path modelPath;
+    std::filesystem::path compiledModelPath;
 	Ort::SessionOptions *sessionOptions;
 public:
-    OnnxModel(std::wstring modelPath) : modelPath(modelPath) {
+    OnnxModel(std::wstring modelName) {
+        GetExecutablePath();
+        modelPath = exeDir / modelName;
         // https://learn.microsoft.com/en-us/windows/ai/new-windows-ml/tutorial?source=recommendations&tabs=cpp
         // ->
         winrt::init_apartment();
@@ -44,9 +49,25 @@ public:
 		sessionOptions->SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
         sessionOptions->EnableCpuMemArena();
         // Save compiled model to [modelpath].compiled
-        compiledModelPath = modelPath + L".compiled";
+        compiledModelPath = modelPath;
+        compiledModelPath += ".compiled";
         model_compiled = std::filesystem::exists(compiledModelPath);
 	}
+    void GetExecutablePath() {
+        TCHAR exePath[MAX_PATH];
+        DWORD dwRet = GetModuleFileName(NULL, exePath, MAX_PATH);
+
+        if (dwRet == 0) {
+            printf("GetModuleFileName failed (%d)\n", GetLastError());
+            return;
+        }
+
+        _tprintf(TEXT("Executable file path: %s\n"), exePath);
+
+        dwRet = PathCchRemoveFileSpec(exePath, MAX_PATH);
+        exeDir = exePath;
+    }
+
 	BOOL isCompiled() { return model_compiled; }
 
     BOOL CompileModel() {

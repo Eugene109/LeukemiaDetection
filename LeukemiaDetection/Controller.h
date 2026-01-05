@@ -52,12 +52,9 @@ public:
             InvalidateRect(hWnd, 0, TRUE); // move this
             break;
         case ID_TOOLS_LOADMODEL:
-            if (OpenModelDialog(hWnd) == TRUE)
-            {
-                OutputDebugStringW(ofn.lpstrFile);
-                model->InitCellDetector(ofn.lpstrFile);
-                InvalidateRect(hWnd, 0, TRUE); // move this
-            }
+            OutputDebugStringW(ofn.lpstrFile);
+            model->InitCellDetector();
+            InvalidateRect(hWnd, 0, TRUE); // move this
             break;
         case ID_TOOLS_COMPILEMODEL:
             model->CompileCellDetector();
@@ -67,7 +64,7 @@ public:
             model->StartOrtSession();
             break;
         case ID_TOOLS_RUNMODEL:
-            model->RunCellDetector();
+            model->RunSlicedDetection();
             InvalidateRect(hWnd, 0, TRUE); // move this
             break;
         case IDC_SEGMENT_X:

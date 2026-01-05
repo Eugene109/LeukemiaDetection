@@ -30,7 +30,7 @@ struct yoloDetectionResult {
 
 class YoloModel : public VisionModel {
 public:
-    YoloModel(std::wstring modelPath) : VisionModel(modelPath, 640, 640) {}
+    YoloModel() : VisionModel(L"yolo11s.onnx", 640, 640) {}
 
     std::vector<yoloDetectionResult> Run(uint32_t* inputFrame, int offsetX = 0, int offsetY = 0) {
         auto start = std::chrono::steady_clock::now();

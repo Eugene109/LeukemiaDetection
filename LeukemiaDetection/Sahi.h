@@ -3,6 +3,7 @@
 #include <openslide.h>
 #include <set>
 #include <list>
+#include <algorithm>
 
 typedef std::vector<yoloDetectionResult>* detListPtr;
 
@@ -19,8 +20,8 @@ public:
 
 	detListPtr* gridDetections; int grid_w; int grid_h;  // row-major order
 	uint32_t* imgBuff = nullptr;
-	Sahi(std::wstring modelPath) {
-		cellDetector = new YoloModel(modelPath);
+	Sahi() {
+		cellDetector = new YoloModel();
 		cellDetector->CompileModel();
 		seg_w = cellDetector->inputTensorW;
 		seg_h = cellDetector->inputTensorH;
@@ -140,29 +141,6 @@ public:
 		}
 	}
 
-
-	void TestIouCircle() {
-		yoloDetectionResult d1 = yoloDetectionResult{ 0,0,32,32, 0.5,1 };
-		yoloDetectionResult d2 = yoloDetectionResult{ 0,1,32,32, 0.5,1 };
-		float iou = iouCircle(d1, d2);
-		sprintf_s(debug, "iou:%f\n", iou);
-		OutputDebugStringA(debug);
-	}
-#include <chrono>
-	void TestIouCircleSpeed() {
-		yoloDetectionResult d1 = yoloDetectionResult{ 0,0,32,32, 0.5,1 };
-		yoloDetectionResult d2 = yoloDetectionResult{ 0,15,10,10, 0.5,1 };
-		auto start = std::chrono::high_resolution_clock::now();
-		for (int a = 0; a < 1647923*2; a++) {
-			float iou = iouCircle(d1, d2);
-		}
-		auto end = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> duration = end - start; // Duration in seconds (default for double)
-
-		sprintf_s(debug, "iou time:%fs\n", (float)duration.count());
-		OutputDebugStringA(debug);
-	}
-
 	const int BORDER_THRESH = 10;
 	inline bool withinBorders(yoloDetectionResult det) {
 		int left = det.x % seg_w - det.w / 2;
@@ -191,6 +169,10 @@ public:
 
 	const float PI = 3.1415926535;
 	float iouCircle(yoloDetectionResult d1, yoloDetectionResult d2) {
+		float AABB_iou = iouAABB(d1, d2); // quick check to see if AABBs overlap at all
+		if (AABB_iou == 0)
+			return 0;
+
 		int r1 = (d1.w + d1.h) / 4; // estimated radius of d1 - average of the half-width and half-height
 		int r2 = (d2.w + d2.h) / 4;
 		float b = dist(d1, d2); // distance from d1 to d2
@@ -222,16 +204,6 @@ public:
 		}
 		return iouAABB(d1, d2); // 'default' case to handle wacky edge cases I didn't think of
 	}
-	int max(int a, int b) {
-		if (a > b)
-			return a;
-		return b;
-	}
-	int min(int a, int b) {
-		if (a < b)
-			return a;
-		return b;
-	}
 	float iouAABB(yoloDetectionResult d1, yoloDetectionResult d2) { // simple min/max find intersection of Axis-Aligned Bounding Boxes (AABB)
 		int minX1 = d1.x - d1.w / 2;
 		int minY1 = d1.y - d1.h / 2;
@@ -249,10 +221,10 @@ public:
 		if (maxY1 < minY2 || maxY2 < minY1) {
 			return 0;
 		}
-		int minXInt = max(minX1, minX2);
-		int maxXInt = min(maxX1, maxX2);
-		int minYInt = max(minY1, minY2);
-		int maxYInt = min(maxY1, maxY2);
+		int minXInt = std::max(minX1, minX2);
+		int maxXInt = std::min(maxX1, maxX2);
+		int minYInt = std::max(minY1, minY2);
+		int maxYInt = std::min(maxY1, maxY2);
 		float intersectArea = (maxXInt - minXInt) * (maxYInt - minYInt);
 		float unionArea = d1.w * d1.h + d2.w * d2.h - intersectArea;
 		return intersectArea / unionArea;

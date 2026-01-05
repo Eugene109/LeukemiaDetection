@@ -34,10 +34,8 @@ protected:
 			slideImg->reframe();
 	}
 
-	void InitCellDetector(LPWSTR filename) {
-		OutputDebugStringW(filename);
-		cellDetector = new YoloModel(filename);
-		sahiModel = new Sahi(filename);
+	void InitCellDetector() {
+		sahiModel = new Sahi();
 		//sahiModel->cellDetector->StartSession();
 	}
 	void CompileCellDetector() {
@@ -65,10 +63,9 @@ public:
 		auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);*/
 		//sprintf_s(sahiModel->debug, "Detections after NMS: %d, %dms\n", (int)cellResults.size(), (int)elapsed.count());
 		//OutputDebugStringA(sahiModel->debug);
-
-		//sahiModel->TestIouCircle();
-
-		//sahiModel->Run(slideImg->slide, 0);
+	}
+	void RunSlicedDetection() {
+		sahiModel->Run(slideImg->slide, 0);
 	}
 public:
 	friend class Controller;

@@ -79,4 +79,7 @@
     <None Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-x64\native\onnxruntime_providers_shared.dll" />
     <None Include="..\external\openslide-bin-4.0.0.8-windows-x64\bin\libopenslide-1.dll" />
   </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="yolo11s.onnx" />
+  </ItemGroup>
 </Project>

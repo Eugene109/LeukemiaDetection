@@ -113,6 +113,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libopenslide.lib;windowsapp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)..\external\openslide-bin-4.0.0.8-windows-x64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <Profile>true</Profile>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y /D "$(ProjectDir)..\external\openslide-bin-4.0.0.8-windows-x64\bin\*.dll" "$(OutDir)"</Command>
@@ -167,6 +168,10 @@
   <ItemGroup>
     <None Include="..\external\openslide-bin-4.0.0.8-windows-x64\bin\libopenslide-1.dll" />
     <None Include="packages.config" />
+    <CopyFileToFolders Include="yolo11s.onnx">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

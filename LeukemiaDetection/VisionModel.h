@@ -7,8 +7,8 @@ public:
     int inputTensorW;
     int inputTensorH;
 
-    VisionModel(std::wstring modelPath, int w = 640, int h = 640)
-        : OnnxModel(modelPath), inputTensorW(w), inputTensorH(h) {}
+    VisionModel(std::wstring modelName, int w = 640, int h = 640)
+        : OnnxModel(modelName), inputTensorW(w), inputTensorH(h) {}
     ~VisionModel() {}
 
     void setInputTensorSize(int w, int h) { inputTensorW = w; inputTensorH = h; }
