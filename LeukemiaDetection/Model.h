@@ -16,7 +16,7 @@ protected:
 	void InitSlideImg(LPWSTR filename) {
 		slideImg = new SlideImageModel(filename, 640,640,2,2);
 	}
-	void SetSlideLevel(int level) {
+	void setSlideLevel(int level) {
 		if (slideImg)
 			slideImg->setLevel(level);
 	}

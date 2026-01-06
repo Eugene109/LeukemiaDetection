@@ -4,7 +4,7 @@
 BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent) {
 
     hWnd = CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_CLIPCHILDREN,
-        x,y,w,h/*absolute magic who cares*/, parent, (HMENU)20429, hInstance, nullptr);
+        x,y,w,h/*absolute magic who cares*/, parent, nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -14,31 +14,32 @@ BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstanc
     }
 
 
-    controller->nav = CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_BORDER,
-        10, 10, 150, 50, hWnd, (HMENU)67, hInstance, nullptr);
+    HWND nav = CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_BORDER,
+        10, 10, 150, 50, hWnd, nullptr, hInstance, nullptr);
     /*int iSelMin = 2;
     int iSelMax = 4;*/
-    controller->zoomBar = CreateWindowEx(0, TRACKBAR_CLASS, L"zoom", WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
-        10, 10, 130, 30, controller->nav, (HMENU)IDC_ZOOM_BAR, hInstance, NULL);
+    HWND zoomBar = CreateWindowEx(0, TRACKBAR_CLASS, L"zoom", WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
+        10, 10, 130, 30, nav, (HMENU)IDC_ZOOM_BAR, hInstance, NULL);
     
-    SetFocus(controller->zoomBar);
+    SetFocus(zoomBar);
+    controller->initSlideViewControls(nav, zoomBar);
 
 
 
     /*CreateWindowEx(0, L"BUTTON", L"0",
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         10, 15, 25, 25,
-        controller->nav, (HMENU)IDC_SET_LEVEL_0, hInstance, nullptr);
+        nav, (HMENU)IDC_SET_LEVEL_0, hInstance, nullptr);
 
     CreateWindowEx(0, L"BUTTON", L"1",
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         45, 15, 25, 25,
-        controller->nav, (HMENU)IDC_SET_LEVEL_1, hInstance, nullptr);
+        nav, (HMENU)IDC_SET_LEVEL_1, hInstance, nullptr);
 
     CreateWindowEx(0, L"BUTTON", L"2",
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         80, 15, 25, 25,
-        controller->nav, (HMENU)IDC_SET_LEVEL_2, hInstance, nullptr);*/
+        nav, (HMENU)IDC_SET_LEVEL_2, hInstance, nullptr);*/
 
     return TRUE;
 }
@@ -161,9 +162,9 @@ BOOL SlideImageView::Paint(HWND hWnd) {
         Bitmap* preprocessedImage = model->getCellDetector()->preprocessImage(model->getSlideImg()->segmentBitmap);
         graphics.DrawImage(preprocessedImage, 0, 0);
         delete preprocessedImage;
+        Pen pen = Pen(Color(255, 0, 0));
         for (auto& det : model->getCellResults()) {
-            Pen* pen = new Pen(Color(255, 0, 0));
-            graphics.DrawRectangle(pen, det.box);
+            graphics.DrawRectangle(&pen, det.box);
             RECT rect = { det.box.X , det.box.Y, det.box.X + det.box.Width, det.box.Y + det.box.Height };
             std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
             DrawTextA(memDC, title.c_str(), -1, &rect, DT_TOP);

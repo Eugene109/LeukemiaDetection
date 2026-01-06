@@ -1,9 +1,6 @@
 #pragma once
 #include "View.h"
 
-#pragma once
-#include "View.h"
-
 BOOL StatusBarView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent) {
 
     hWnd = CreateWindowW(L"Status Bar", L"STATBAR", WS_CHILD | WS_VISIBLE | WS_BORDER,
@@ -69,7 +66,7 @@ BOOL StatusBarView::Paint(HWND hWnd) {
         DrawTextA(hdc, msg, -1, &rect, DT_TOP);
     }
     else if (model->getCellDetector()->isCompiled()) {
-        LPCSTR msg = "ONNX model compiled sucessfully";
+        LPCSTR msg = "ONNX model compiled successfully";
         RECT rect = { 5, 0, 500, 100 };
         DrawTextA(hdc, msg, -1, &rect, DT_TOP);
     }

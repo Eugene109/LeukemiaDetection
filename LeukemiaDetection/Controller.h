@@ -15,7 +15,6 @@
 #include "Model.h"
 
 class Controller {
-public:
     Model* model;
     HINSTANCE hInst;
 
@@ -24,6 +23,17 @@ public:
 
     HWND nav;
     HWND zoomBar;
+
+public:
+    void initSlideViewControls(HWND navWindow, HWND zoomBarWindow) {
+        nav = navWindow;
+        zoomBar = zoomBarWindow;
+    }
+    void initTextControls(HWND xInput, HWND yInput) {
+        textInput_x = xInput;
+        textInput_y = yInput;
+    }
+
     char debug[100] = { 0 };
 
     TCHAR textInBuff[100] = { 0 };       // if using TCHAR macros
@@ -109,7 +119,7 @@ public:
     LRESULT ProcessNavCommands(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         int wmId = LOWORD(wParam);
         if (wmId >= IDC_SET_LEVEL_0 && wmId <= IDC_SET_LEVEL_2) {
-            model->SetSlideLevel(wmId - IDC_SET_LEVEL_0);
+            model->setSlideLevel(wmId - IDC_SET_LEVEL_0);
             model->Reframe();
             InvalidateRect(GetParent(hWnd), 0, FALSE);
         }
@@ -126,7 +136,7 @@ public:
     LRESULT ProcessZoomChanged(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         int zoom = SendMessage(zoomBar, TBM_GETPOS, 0, 0);
 
-        model->SetSlideLevel(zoom);
+        model->setSlideLevel(zoom);
         model->Reframe();
         InvalidateRect(GetParent(hWnd), 0, FALSE);
         return 0;

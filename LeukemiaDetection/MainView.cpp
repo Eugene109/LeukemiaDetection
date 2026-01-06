@@ -106,7 +106,7 @@ BOOL MainView::Paint(HWND hWnd) {
         DrawTextA(hdc, msg, -1, &rect, DT_TOP);
     }
     else if (model->getCellDetector()->isCompiled()) {
-        LPCSTR msg = "ONNX model compiled sucessfully";
+        LPCSTR msg = "ONNX model compiled successfully";
         RECT rect = { 150, 0, 500, 100 };
         DrawTextA(hdc, msg, -1, &rect, DT_TOP);
     }

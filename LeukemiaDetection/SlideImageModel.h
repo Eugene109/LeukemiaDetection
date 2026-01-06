@@ -55,7 +55,7 @@ public:
 		OutputDebugStringW(buffer);
 
 
-		int bestLevel = openslide_get_level_downsample(slide, 2);
+		int bestLevel = openslide_get_best_level_for_downsample(slide, 2);
 		openslide_get_level0_dimensions(slide, &total_w, &total_h);
 		wsprintf(buffer, L"best level for 0.5x: %d\n", bestLevel);
 		OutputDebugStringW(buffer);
