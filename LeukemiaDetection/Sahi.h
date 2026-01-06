@@ -52,6 +52,8 @@ public:
 
 		int startX = 100;
 		int startY = 27;
+		int numFramesX = 6;
+		int numFramesY = 6;
 
 		long long slide_w, slide_h;
 		openslide_get_level0_dimensions(slide, &slide_w, &slide_h);
@@ -62,8 +64,8 @@ public:
 			gridDetections[a] = nullptr;
 		}
 		
-		for (int x = 0; x < 5; x++) {
-			for (int y = 0; y < 5; y++) {
+		for (int x = 0; x < numFramesX-1; x++) { // each frame is two grid cells wide
+			for (int y = 0; y < numFramesY-1; y++) {
 				int gridX = startX + x;
 				int gridY = startY + y;
 				if (inPolygon(gridX, gridY)) {
@@ -94,8 +96,24 @@ public:
 				}
 			}
 		}
-
 		cellDetector->CloseSession();
+
+		for (int x = 0; x < numFramesX; x++) {
+			for (int y = 0; y < numFramesY; y++) {
+				int gridX = startX + x;
+				int gridY = startY + y;
+				int gridIndex = gridY * grid_w + gridX;
+				if (inPolygon(gridX, gridY)) {
+					auto start = std::chrono::high_resolution_clock::now();
+					NMS(*gridDetections[gridIndex]);
+					auto end = std::chrono::high_resolution_clock::now();
+
+					auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+					sprintf_s(debug, "(%d,%d) nms: %fms detections: %d\n", x,y, elapsed.count(), gridDetections[gridIndex]->size());
+					OutputDebugStringA(debug);
+				}
+			}
+		}
 	}
 
 	void splitDetections(std::vector<yoloDetectionResult>& detections) {
