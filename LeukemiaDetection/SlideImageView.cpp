@@ -4,7 +4,7 @@
 BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent) {
 
     hWnd = CreateWindowW(L"Image Scope", L"IMGSCOPE", WS_CHILD | WS_VISIBLE | WS_BORDER | WS_CLIPCHILDREN,
-        x,y,w,h/*absolute magic who cares*/, parent, nullptr, hInstance, nullptr);
+        x,y,w,h/*absolute magic who cares*/, parent, (HMENU)nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -15,7 +15,7 @@ BOOL SlideImageView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstanc
 
 
     HWND nav = CreateWindowW(L"Image Navigation", L"IMGNAV", WS_CHILD | WS_BORDER,
-        10, 10, 150, 50, hWnd, nullptr, hInstance, nullptr);
+        10, 10, 150, 50, hWnd, (HMENU)nullptr, hInstance, nullptr);
     /*int iSelMin = 2;
     int iSelMax = 4;*/
     HWND zoomBar = CreateWindowEx(0, TRACKBAR_CLASS, L"zoom", WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,

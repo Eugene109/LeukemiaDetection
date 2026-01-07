@@ -4,7 +4,7 @@
 BOOL CellListView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent) {
 
     hWnd = CreateWindowW(L"Cell List", L"CELLLIST", WS_CHILD | WS_VISIBLE | WS_BORDER,
-        x, y, w, h, parent, (HMENU)2635429, hInstance, nullptr);
+        x, y, w, h, parent, (HMENU)nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {

@@ -97,6 +97,12 @@ public:
 		yOff = 0;
 
 		delete segmentBitmap; segmentBitmap = nullptr;
+		// xPos and yPos represent the logical center of the current viewport at the given level.
+		// A region that is 3× the viewport size (seg_w*3 by seg_h*3), centered on (xPos, yPos), is stored in a bitmap to enable smooth pan animation.
+		// openslide API uses coordinates in level-0 coordinate space, to convert:
+		//   - multiply the half-extent of the 3×3 region (seg_w * 3 / 2) by the level downsample (scale)
+		//   - subtract this from the center (xPos, yPos) to obtain the top-left corner of the requested region.
+
 		openslide_read_region(slide, imgBuff, xPos - (seg_w * 3 / 2) * scale, yPos - (seg_h * 3 / 2) * scale, level, seg_w * 3, seg_h * 3);
 
 		segmentBitmap = new Bitmap((int)seg_w*3, (int)seg_h*3, (int)seg_w * 3 * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);

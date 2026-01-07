@@ -4,7 +4,7 @@
 BOOL MalignantCellsView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent) {
 
     hWnd = CreateWindowW(L"Malignant Cells", L"BADCELLS", WS_CHILD | WS_VISIBLE | WS_BORDER,
-        x, y, w, h, parent, (HMENU)87767354, hInstance, nullptr);
+        x, y, w, h, parent, (HMENU)nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {

@@ -5,7 +5,7 @@
 BOOL TabView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent){
     hInst = hInstance;
     hWnd = CreateWindowW(L"Tab Container", L"TABS", WS_CHILD | WS_VISIBLE | WS_BORDER,
-        x, y, w, h, parent, (HMENU)955845, hInstance, nullptr);
+        x, y, w, h, parent, (HMENU)nullptr, hInstance, nullptr);
 
     RECT rcClient;
     INITCOMMONCONTROLSEX icex;
@@ -46,7 +46,6 @@ BOOL TabView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int 
         }
     }
 
-
     // Creates a child window (a static control) to occupy the tab control's 
     //   display area. 
     // Returns the handle to the static control. 
@@ -62,7 +61,7 @@ BOOL TabView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int 
 
     GetClientRect(hTabWnd, &rcClient);
 
-
+    // windows handles HWNDs, View class instances are deleted as they go out of scope
     SlideImageView imageScope(hInstance);
     imageScope.InitInstance(0, 0, rcClient.right, rcClient.bottom - 25, hInstance, nCmdShow, hTabWnd);
     tabDisplays[0] = imageScope;
@@ -149,15 +148,9 @@ BOOL TabView::OnNotify(HWND hwndTab, HWND hwndDisplay, LPARAM lParam)
     case TCN_SELCHANGE:
     {
         int iPage = TabCtrl_GetCurSel(hwndTab);
-        swprintf(achTemp,256, L"\nSelection changed, %d\n",iPage);
+        swprintf(achTemp, sizeof(achTemp) / sizeof(achTemp[0]), L"\nSelection changed, %d\n",iPage);
         OutputDebugStringW(achTemp);
         ShowWindow(tabDisplays[iPage], SW_SHOW);
-
-        /*LoadString(hInst, IDS_SUNDAY + iPage, achTemp,
-            sizeof(achTemp) / sizeof(achTemp[0]));*/
-        //LRESULT result = SendMessage(hwndDisplay, WM_SETTEXT, 0,
-            //(LPARAM)achTemp);
-        //ShowWindow(tabDisplays[iPage], SW_RESTORE);
         break;
     }
     }
@@ -168,8 +161,6 @@ BOOL TabView::Paint(HWND hWnd) {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hWnd, &ps);
     // TODO: Add any drawing code that uses hdc here...
-
-    //Bitmap test(L"C:\\Users\\Eugene\\source\\repos\\LeukemiaDetection\\kodim03.png");
 
     Graphics graphics(hdc);
 
