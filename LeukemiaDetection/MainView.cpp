@@ -64,6 +64,24 @@ BOOL MainView::InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
+
+    HFONT hFont = CreateFont(
+        20,                         // nHeight
+        0,                          // nWidth
+        0,                          // nEscapement
+        0,                          // nOrientation
+        FW_NORMAL,                  // fnWeight (e.g., FW_NORMAL, FW_BOLD)
+        TRUE,                       // fdwItalic
+        FALSE,                      // fdwUnderline
+        FALSE,                      // fdwStrikeOut
+        ANSI_CHARSET,               // fdwCharSet
+        OUT_DEFAULT_PRECIS,         // fdwOutputPrecision
+        CLIP_DEFAULT_PRECIS,        // fdwClipPrecision
+        DEFAULT_QUALITY,            // fdwQuality
+        DEFAULT_PITCH | FF_SWISS,   // fdwPitchAndFamily
+        L"Comic Sans MS"            // lpszFace (Font name)
+    ); SendMessage(hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+
     return TRUE;
 }
 

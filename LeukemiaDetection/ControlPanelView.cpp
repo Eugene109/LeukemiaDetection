@@ -16,7 +16,7 @@ BOOL ControlPanelView::InitInstance(int x, int y, int w, int h, HINSTANCE hInsta
 
     CreateWindowEx(0, L"BUTTON", L"Run Model",
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        10, 10, 200, 50,
+        10, 10, 220, 50,
         hWnd, (HMENU)ID_TOOLS_RUNMODEL, hInst, nullptr);
 
     CreateWindowEx(0, L"STATIC", L"Model:",
@@ -30,9 +30,8 @@ BOOL ControlPanelView::InitInstance(int x, int y, int w, int h, HINSTANCE hInsta
 
     CreateWindowEx(0, L"BUTTON", L"Submit",
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        240, 70, 80, 25,
+        240, 70, 80, 20,
         hWnd, (HMENU)nullptr, hInst, nullptr);
-
 
     CreateWindowEx(0, L"STATIC", L"Segment X:",
         WS_CHILD | WS_VISIBLE, 10, 100, 80, 20,
@@ -54,12 +53,8 @@ BOOL ControlPanelView::InitInstance(int x, int y, int w, int h, HINSTANCE hInsta
 
     CreateWindowEx(0, L"BUTTON", L"Move",
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        50, 160, 80, 25,
+        10, 160, 80, 20,
         hWnd, (HMENU)IDC_MOVE_SEGMENT, hInst, nullptr);
-
-    CreateWindowEx(0, L"TRACKBAR", L"",
-        WS_CHILD | WS_VISIBLE, 10, 190, 80, 20,
-        hWnd, (HMENU)nullptr , hInst, nullptr);
 
     controller->initTextControls(textInput_x, textInput_y);
 
