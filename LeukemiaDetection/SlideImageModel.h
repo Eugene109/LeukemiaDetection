@@ -23,15 +23,23 @@ public:
 	uint32_t* imgBuff = nullptr;
 	Bitmap* segmentBitmap = nullptr;
 
-	int currentSeg_x;
-	int currentSeg_y;
-	const static int LEVEL = 0;
+	int level = 0;
+	int numLevels;
+	void setLevel(int newLvl) {
+		level = newLvl;
+	}
+	int getLevel() {
+		return level;
+	}
+	int getNumLevels() {
+		return numLevels;
+	}
 	int seg_w;
 	int seg_h;
 	long long total_w; long long total_h;
 	SlideImageModel(LPWSTR filename, int segmentWidth = 640, int segmentHeight = 640, int startX = 0, int startY = 0) 
-		: seg_w(segmentWidth), seg_h(segmentHeight), currentSeg_x(startX), currentSeg_y(startY),
-		xPos(startX*segmentWidth/2 - 640), yPos(startY*segmentHeight/2 - 640), xOff(640), yOff(640) {
+		: seg_w(segmentWidth), seg_h(segmentHeight),
+		xPos((startX)*segmentWidth / 2), yPos(startY* segmentHeight / 2), xOff(0), yOff(0) {
 		int requiredSize = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
 		char* c_str = new char[requiredSize];
 		memset(c_str, 0, requiredSize);
@@ -39,14 +47,21 @@ public:
 
 		slide = openslide_open(c_str);
 
-		int levels = openslide_get_level_count(slide);
+		numLevels = openslide_get_level_count(slide);
+		level = numLevels-1;
 		openslide_get_level0_dimensions(slide, &total_w, &total_h);
 		wchar_t buffer[256];
-		wsprintf(buffer, L"openslide image dimensions: levels=%d, width=%d, height=%d\n", levels,(int)total_w, (int)total_h);
+		wsprintf(buffer, L"openslide image dimensions: levels=%d, width=%d, height=%d\n", numLevels,(int)total_w, (int)total_h);
+		OutputDebugStringW(buffer);
+
+
+		int bestLevel = openslide_get_best_level_for_downsample(slide, 2);
+		openslide_get_level0_dimensions(slide, &total_w, &total_h);
+		wsprintf(buffer, L"best level for 0.5x: %d\n", bestLevel);
 		OutputDebugStringW(buffer);
 
 		imgBuff = new uint32_t[640 * 640 * 9];
-		openslide_read_region(slide, imgBuff, xPos, yPos, LEVEL, seg_w*3, seg_h*3);
+		openslide_read_region(slide, imgBuff, xPos-seg_w * 3/2, yPos-seg_h * 3/2, level, seg_w*3, seg_h*3);
 		segmentBitmap = new Bitmap((int)seg_w*3, (int)seg_h*3, (int)seg_w * 3 * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
 	}
 	~SlideImageModel() {
@@ -76,37 +91,22 @@ public:
 		//segmentBitmap = new Bitmap((int)seg_w, (int)seg_h, (int)seg_w * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
 	}
 	void reframe() {
-		xPos += xOff;
-		yPos += yOff;
+		int scale = openslide_get_level_downsample(slide, level);
+
+		xPos += xOff* scale;
+		yPos += yOff* scale;
 		xOff = 0;
 		yOff = 0;
 
 		delete segmentBitmap; segmentBitmap = nullptr;
-		openslide_read_region(slide, imgBuff, xPos, yPos, LEVEL, seg_w*3, seg_h*3);
+		// xPos and yPos represent the logical center of the current viewport at the given level.
+		// A region that is 3× the viewport size (seg_w*3 by seg_h*3), centered on (xPos, yPos), is stored in a bitmap to enable smooth pan animation.
+		// openslide API uses coordinates in level-0 coordinate space, to convert:
+		//   - multiply the half-extent of the 3×3 region (seg_w * 3 / 2) by the level downsample (scale)
+		//   - subtract this from the center (xPos, yPos) to obtain the top-left corner of the requested region.
+
+		openslide_read_region(slide, imgBuff, xPos - (seg_w * 3 / 2) * scale, yPos - (seg_h * 3 / 2) * scale, level, seg_w * 3, seg_h * 3);
 
 		segmentBitmap = new Bitmap((int)seg_w*3, (int)seg_h*3, (int)seg_w * 3 * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
-	}
-
-	void setSegment(int x, int y) {
-		currentSeg_x = x;
-		currentSeg_y = y;
-
-		delete segmentBitmap; segmentBitmap = nullptr;
-		openslide_read_region(slide, imgBuff, (currentSeg_x)*seg_w / 2, (currentSeg_y)*seg_h / 2, LEVEL, seg_w, seg_h);
-
-		segmentBitmap = new Bitmap((int)seg_w, (int)seg_h, (int)seg_w * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
-	}
-
-	void nextSegment() {
-		currentSeg_x++;
-		if (currentSeg_x * seg_w > total_w) {
-			currentSeg_y++;
-			currentSeg_x = 0;
-		}
-
-		delete segmentBitmap; segmentBitmap = nullptr;
-		openslide_read_region(slide, imgBuff, (currentSeg_x)*seg_w / 2, (currentSeg_y)*seg_h / 2, LEVEL, seg_w, seg_h);
-
-		segmentBitmap = new Bitmap((int)seg_w, (int)seg_h, (int)seg_w * 4, PixelFormat32bppARGB, (BYTE*)imgBuff);
 	}
 };

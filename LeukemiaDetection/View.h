@@ -1,11 +1,4 @@
 #pragma once
-#define NOMINMAX
-#include <winrt/Windows.AI.MachineLearning.h>
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Storage.h>
-
-#include <onnxruntime_cxx_api.h>
-
 #include "openslide-features.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -14,91 +7,148 @@
 
 #include <windows.h>
 #include <gdiplus.h>
+#include <commctrl.h>
 
 #include <vector>
 
 using namespace Gdiplus;
 
-using namespace winrt;
-using namespace Windows::AI::MachineLearning;
-using namespace Windows::Foundation;
-using namespace Windows::Storage;
-
 #include "framework.h"
 #include "LeukemiaDetection.h"
 
 #include "Model.h"
+#include "Controller.h"
 
 class View {
-    Model* model;
+protected:
+    inline static Model* model = nullptr;
+    inline static Controller* controller = nullptr;
 public:
-    View(Model* appModel) : model(appModel) {}
+    HINSTANCE hInst;
+    HWND hWnd;
+    operator HWND() const { return hWnd; }
+    View(Model* appModel, Controller* controllerIn) {
+        if (!model)
+            model = appModel;
+        if (!controller)
+            controller = controllerIn;
+    }
+    View() {}
     ~View() {}
 
-	BOOL Paint(HWND hWnd) {
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hWnd, &ps);
-        // TODO: Add any drawing code that uses hdc here...
+    virtual BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent = nullptr) { return TRUE; }
+    virtual ATOM RegisterClasses(HINSTANCE hInstance) { return 0; }
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
 
-        //Bitmap test(L"C:\\Users\\Eugene\\source\\repos\\LeukemiaDetection\\kodim03.png");
 
-        Graphics graphics(hdc);
-        if (model->getSlideImg() == nullptr) {
-            LPCSTR error_msg = "Open an image file (File->Open Image)";
-            RECT error_rect = { 50, 50, 350, 100 };
-            DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
-        }
-        else if (model->getSlideImg()->segmentBitmap->GetLastStatus() == Ok) {
-            graphics.DrawImage(model->getSlideImg()->segmentBitmap, 50, 50, 640+model->getSlideImg()->xOff, 640+model->getSlideImg()->yOff, 640, 640, UnitPixel);
-            //graphics.DrawImage(model->getSlideImg()->segmentBitmap, 50, 50);
-        }
-        else {
-            LPCSTR error_msg = "Image not found!";
-            RECT error_rect = { 50, 50, 350, 100 };
-            DrawTextA(hdc, error_msg, -1, &error_rect, DT_TOP);
-        }
+#define MAX_LOADSTRING 100
+class MainView : public View {
+    WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
+    WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+public:
 
-        if (model->getCellDetector() == nullptr) {
-            LPCSTR msg = "Load an ONNX model (Tools-> Load Model)";
-            RECT rect = { 150, 0, 500, 100 };
-            DrawTextA(hdc, msg, -1, &rect, DT_TOP);
-        }
-        else if (model->getCellDetector()->isCompiled()) {
-            LPCSTR msg = "ONNX model compiled sucessfully";
-            RECT rect = { 150, 0, 500, 100 };
-            DrawTextA(hdc, msg, -1, &rect, DT_TOP);
-        }
-        else {
-            LPCSTR msg = "ONNX model not compiled";
-            RECT rect = { 150, 0, 500, 100 };
-            DrawTextA(hdc, msg, -1, &rect, DT_TOP);
-        }
-        if (model->getCellResults().size()) {
-            graphics.Clear(Color(255, 255, 255));
+    MainView(Model* appModel, Controller* controllerIn) : View(appModel, controllerIn) {}
 
-            //TODO: clean this part up, direct call of a member function goes against MVC
-            Bitmap* preprocessedImage = model->getCellDetector()->preprocessImage(model->segmentBitmap);
-            //
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent = nullptr);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
 
-            graphics.DrawImage(preprocessedImage, 0, 0);
-            delete preprocessedImage;
-            for (auto& det : model->getCellResults()) {
-                Pen* pen = new Pen(Color(255, 0, 0));
-                //det.box.X += 50;
-                //det.box.Y += 50;
-                RectF box = RectF{
-                    det.x - det.w / 2.0f,
-                    det.y - det.h / 2.0f,
-                    (REAL)det.w,
-                    (REAL)det.h
-                };
-                graphics.DrawRectangle(pen, box);
-                RECT rect = { det.x - det.w/2 , det.y-det.h/2, det.x + det.w / 2, det.y + det.h / 2 };
-                std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
-                DrawTextA(hdc, title.c_str(), -1, &rect, DT_TOP);
-            }
-        }
+class ControlPanelView : public View {
+public:
+    ControlPanelView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
 
-        return EndPaint(hWnd, &ps);
-	}
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
+
+
+class TabView : public View {
+#define NUM_TABS 4
+    inline static HWND tabDisplays[NUM_TABS] = { 0 };
+    inline static HWND hTabWnd = 0;
+public:
+    TabView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL OnNotify(HWND hwndTab, HWND hwndDisplay, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
+
+
+class SlideImageView : public View {
+public:
+    SlideImageView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+
+    static BOOL InitNavCtrls(HINSTANCE hInstance, HWND parent);
+
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+    static LRESULT CALLBACK NavWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL PaintNav(HWND hWnd);
+};
+
+class CellListView : public View {
+public:
+    CellListView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+    
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
+
+class MalignantCellsView : public View {
+public:
+    MalignantCellsView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
+
+class StatisticsView : public View {
+public:
+    StatisticsView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
+};
+
+
+class StatusBarView : public View {
+public:
+    StatusBarView(HINSTANCE hInstance) {
+        RegisterClasses(hInstance);
+    }
+
+    BOOL InitInstance(int x, int y, int w, int h, HINSTANCE hInstance, int nCmdShow, HWND parent);
+    ATOM RegisterClasses(HINSTANCE hInstance);
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static BOOL Paint(HWND hWnd);
 };

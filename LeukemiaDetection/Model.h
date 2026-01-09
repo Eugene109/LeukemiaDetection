@@ -17,14 +17,11 @@ protected:
 	void InitSlideImg(LPWSTR filename) {
 		slideImg = new SlideImageModel(filename, 640,640,52,18);
 	}
-	void SetImageSegment(int x, int y) {
+	void setSlideLevel(int level) {
 		if (slideImg)
-			slideImg->setSegment(x, y);
+			slideImg->setLevel(level);
 	}
-	void NextImageSegment() {
-		if (slideImg)
-			slideImg->nextSegment();
-	}
+
 	void MoveSlide(int dx, int dy) {
 		if (slideImg)
 			slideImg->move(dx, dy);
