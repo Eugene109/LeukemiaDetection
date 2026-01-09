@@ -45,7 +45,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -155,7 +155,15 @@
     <ClInclude Include="YoloModel.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CellListView.cpp" />
+    <ClCompile Include="ControlPanelView.cpp" />
     <ClCompile Include="LeukemiaDetection.cpp" />
+    <ClCompile Include="MainView.cpp" />
+    <ClCompile Include="MalignantCellsView.cpp" />
+    <ClCompile Include="SlideImageView.cpp" />
+    <ClCompile Include="StatisticsView.cpp" />
+    <ClCompile Include="StatusBarView.cpp" />
+    <ClCompile Include="TabView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="LeukemiaDetection.rc" />

@@ -8,14 +8,22 @@
 #define IDD_ABOUTBOX                    103
 #define IDM_ABOUT                       104
 #define IDD_DIALOGBAR                   104
+#define IDS_IMAGE_SCOPE_TAB             104
 #define IDM_EXIT                        105
+#define IDS_CELL_LIST_TAB               105
+#define IDS_MALIGNANT_CELLS_TAB         106
 #define IDI_LEUKEMIADETECTION           107
+#define IDS_STATISTICS_TAB              107
 #define IDI_SMALL                       108
 #define IDC_LEUKEMIADETECTION           109
 #define IDC_SEGMENT_X                   110
 #define IDC_SEGMENT_Y                   111
 #define IDC_MOVE_SEGMENT                112
+#define IDC_ZOOM_BAR                    126
+#define IDC_SET_LEVEL_0                 127
 #define IDR_MAINFRAME                   128
+#define IDC_SET_LEVEL_1                 128
+#define IDC_SET_LEVEL_2                 129
 #define ID_HELLOTHERE_HI                32771
 #define ID_TOOLS                        32772
 #define ID_FILE_OPENIMAGE               32773
@@ -30,7 +38,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        129
+#define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         32778
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           110

@@ -15,12 +15,24 @@
 #include "Model.h"
 
 class Controller {
-public:
     Model* model;
     HINSTANCE hInst;
 
     HWND textInput_x;
     HWND textInput_y;
+
+    HWND nav;
+    HWND zoomBar;
+
+public:
+    void initSlideViewControls(HWND navWindow, HWND zoomBarWindow) {
+        nav = navWindow;
+        zoomBar = zoomBarWindow;
+    }
+    void initTextControls(HWND xInput, HWND yInput) {
+        textInput_x = xInput;
+        textInput_y = yInput;
+    }
 
     char debug[100] = { 0 };
 
@@ -44,13 +56,25 @@ public:
                 OutputDebugStringW(ofn.lpstrFile);
                 model->InitSlideImg(ofn.lpstrFile);
                 InvalidateRect(hWnd, 0, TRUE); // TODO: probably should move this to better adhere to MVC
+                int iMin = 0;
+                int iMax = model->getSlideImg()->getNumLevels() -1;
+                SendMessage(zoomBar, TBM_SETRANGE,
+                    (WPARAM)TRUE,                   // redraw flag 
+                    (LPARAM)MAKELONG(iMin, iMax));  // min. & max. positions
+                SendMessage(zoomBar, TBM_SETPAGESIZE,
+                    0, (LPARAM)4);                  // new page size
+                SendMessage(zoomBar, TBM_SETPOS,
+                    (WPARAM)TRUE,                   // redraw flag 
+                    (LPARAM)model->getSlideImg()->getLevel());
+
+                ShowWindow(nav, SW_SHOW);
             }
             break;
-        case ID_FILE_NEXTIMAGESEGMENT:
-            model->NextImageSegment();
+        //case ID_FILE_NEXTIMAGESEGMENT:
+        //    model->NextImageSegment();
 
-            InvalidateRect(hWnd, 0, TRUE); // move this
-            break;
+        //    InvalidateRect(hWnd, 0, TRUE); // move this
+        //    break;
         case ID_TOOLS_LOADMODEL:
             if (OpenModelDialog(hWnd) == TRUE)
             {
@@ -75,15 +99,15 @@ public:
             GetWindowText(textInput_y, textInBuff, ARRAYSIZE(textInBuff));
             OutputDebugString(textInBuff);
             break;
-        case IDC_MOVE_SEGMENT:
-            OutputDebugStringW(L"werarhhj");
-            //sprintf_s(debug, "%d, %d, m:%d, %d, %d\n", HIWORD(wParam), LOWORD(wParam), message, HIWORD(lParam), LOWORD(lParam));
-            GetWindowText(textInput_x, textInBuff, ARRAYSIZE(textInBuff)-50);
-            GetWindowText(textInput_y, textInBuff+50, ARRAYSIZE(textInBuff)-50);
-            model->SetImageSegment(_wtoi(textInBuff), _wtoi(textInBuff+50));
+        //case IDC_MOVE_SEGMENT:
+        //    OutputDebugStringW(L"werarhhj");
+        //    //sprintf_s(debug, "%d, %d, m:%d, %d, %d\n", HIWORD(wParam), LOWORD(wParam), message, HIWORD(lParam), LOWORD(lParam));
+        //    GetWindowText(textInput_x, textInBuff, ARRAYSIZE(textInBuff)-50);
+        //    GetWindowText(textInput_y, textInBuff+50, ARRAYSIZE(textInBuff)-50);
+        //    model->SetImageSegment(_wtoi(textInBuff), _wtoi(textInBuff+50));
 
-            InvalidateRect(hWnd, 0, TRUE); // move this
-            break;
+        //    InvalidateRect(hWnd, 0, TRUE); // move this
+        //    break;
         case IDM_EXIT:
             DestroyWindow(hWnd);
             break;
@@ -92,6 +116,33 @@ public:
         }
         return 0;
     }
+    LRESULT ProcessNavCommands(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+        int wmId = LOWORD(wParam);
+        if (wmId >= IDC_SET_LEVEL_0 && wmId <= IDC_SET_LEVEL_2) {
+            model->setSlideLevel(wmId - IDC_SET_LEVEL_0);
+            model->Reframe();
+            InvalidateRect(GetParent(hWnd), 0, FALSE);
+        }
+        switch (wmId)
+        {
+        case IDM_EXIT:
+            DestroyWindow(hWnd);
+            break;
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+        }
+        return 0;
+    }
+    LRESULT ProcessZoomChanged(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+        int zoom = SendMessage(zoomBar, TBM_GETPOS, 0, 0);
+
+        model->setSlideLevel(zoom);
+        model->Reframe();
+        InvalidateRect(GetParent(hWnd), 0, FALSE);
+        return 0;
+    }
+
+
     bool Ldrag; int lastPosL_x; int lastPosL_y;
     bool Rdrag;
     bool Mdrag;
@@ -112,6 +163,7 @@ public:
         //sprintf_s(debug, "up x:%d, y:%d\n", LOWORD(lParam), HIWORD(lParam));
         //OutputDebugStringA(debug);
         model->Reframe();
+        InvalidateRect(hWnd, 0, FALSE);
         Ldrag = false;
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -131,8 +183,8 @@ public:
             model->MoveSlide(lastPosL_x-LOWORD(lParam), lastPosL_y - HIWORD(lParam));
             lastPosL_x = (int)LOWORD(lParam);
             lastPosL_y = (int)HIWORD(lParam);
-            RECT view_rect = { 50, 50, 690, 690 };
-            InvalidateRect(hWnd, &view_rect, FALSE); // move this
+            //RECT view_rect = { 0, 0, 640, 640 };
+            InvalidateRect(hWnd, 0, FALSE); // move this
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -168,7 +220,7 @@ public:
         ofn.hwndOwner = hWnd;
         ofn.lpstrFile = szFile;
         ofn.nMaxFile = sizeof(szFile);
-        ofn.lpstrFilter = _T("Image Files\0*.png;*.tiff;*.jpeg;*.jpg;*.bmp;*.gif\0All\0*.*\0");
+        ofn.lpstrFilter = _T("WSI Files\0*.svs;*.tiff\0Image Files\0*.png;*.tiff;*.jpeg;*.jpg;*.bmp;*.gif\0All\0*.*\0");
         ofn.nFilterIndex = 1;
         ofn.lpstrFileTitle = NULL;
         ofn.nMaxFileTitle = 0;
