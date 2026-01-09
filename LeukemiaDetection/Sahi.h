@@ -18,7 +18,6 @@ public:
 	int seg_w;
 	int seg_h;
 
-	detListPtr* gridDetections; int grid_w; int grid_h;  // row-major order
 	uint32_t* imgBuff = nullptr;
 	Sahi() {
 		cellDetector = new YoloModel();

@@ -17,11 +17,15 @@
 
 using namespace Gdiplus;
 
+typedef std::vector<yoloDetectionResult>* detListPtr;
+
 class SlideImageModel {
 public:
 	openslide_t* slide = nullptr;
 	uint32_t* imgBuff = nullptr;
 	Bitmap* segmentBitmap = nullptr;
+
+	detListPtr* gridDetections; int grid_w; int grid_h;  // row-major order
 
 	int level = 0;
 	int numLevels;

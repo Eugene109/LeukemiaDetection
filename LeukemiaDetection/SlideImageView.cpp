@@ -157,18 +157,27 @@ BOOL SlideImageView::Paint(HWND hWnd) {
     }
     if (model->getCellResults().size()) {
         graphics.Clear(Color(255, 255, 255));
-
-        //TODO: clean this part up, direct call of a member function goes against MVC
-        Bitmap* preprocessedImage = model->getCellDetector()->preprocessImage(model->getSlideImg()->segmentBitmap);
+        
+		// preview display of processed image and detections
+        Bitmap* preprocessedImage = model->getCellDetector()->preprocessImage(model->segmentBitmap);
         graphics.DrawImage(preprocessedImage, 0, 0);
         delete preprocessedImage;
-        Pen pen = Pen(Color(255, 0, 0));
         for (auto& det : model->getCellResults()) {
-            graphics.DrawRectangle(&pen, det.box);
-            RECT rect = { det.box.X , det.box.Y, det.box.X + det.box.Width, det.box.Y + det.box.Height };
+            Pen* pen = new Pen(Color(255, 0, 0));
+            //det.box.X += 50;
+            //det.box.Y += 50;
+            RectF box = RectF{
+                det.x - det.w / 2.0f,
+                det.y - det.h / 2.0f,
+                (REAL)det.w,
+                (REAL)det.h
+            };
+            graphics.DrawRectangle(pen, box);
+            RECT rect = { det.x - det.w / 2 , det.y - det.h / 2, det.x + det.w / 2, det.y + det.h / 2 };
             std::string title = std::to_string(det.classId) + " : " + std::to_string((int)(det.confidence * 100)) + "%";
-            DrawTextA(memDC, title.c_str(), -1, &rect, DT_TOP);
+            DrawTextA(hdc, title.c_str(), -1, &rect, DT_TOP);
         }
+
     }
 
     // blit buffers
